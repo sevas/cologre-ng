@@ -1,0 +1,3 @@
+<area shape="rect" href="$class_c_resource_converter.html" title="abstract base class for all resource converters" alt="" coords="7,174,145,200">
+<area shape="rect" href="$class_c_converter.html" title="Base class for all converter classes." alt="" coords="35,96,117,123">
+<area shape="rect" href="$structconversion_options.html" title="global struct with conversion options. make sure to set these before calling any..." alt="" coords="12,6,140,32">

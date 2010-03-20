@@ -1,0 +1,5 @@
+<area shape="rect" href="$class_c_resource_converter.html" title="abstract base class for all resource converters" alt="" coords="169,80,308,107">
+<area shape="rect" href="$class_c_scene_converter.html" title="Class for converting collada scenes into ogre scenegraphs." alt="" coords="332,80,452,107">
+<area shape="rect" href="$class_c_controller_converter.html" title="Parses collada controller libraries." alt="" coords="5,155,144,182">
+<area shape="rect" href="$class_c_geometry_converter.html" title="Class for converting collada geometry into ogre meshes." alt="" coords="168,155,309,182">
+<area shape="rect" href="$class_c_material_converter.html" title="Class for converting collada materials into ogre materials." alt="" coords="333,155,464,182">

@@ -1,0 +1,19 @@
+/*!
+
+\page install Installation Instructions
+\author Michael Weyel
+		
+\section cologre_install Cologre 
+
+Note : I compiled cologre using MS Visual C++ 2005 (8.0) SP1 only. Other compilers might work, but maybe some modifications are needed.
+
+Once you have downloaded cologre.zip, just unzip it into any folder on your harddisk. Then, in case you haven't done so already, you need to either download the Ogre prebuilt SDK or the Ogre sources (which need to be compiled, of course, just follow the Ogre instructions). After that, open cologre.sln, which will open the solution and project with Visual Studio. In there, open the project properties dialog and point the C/C++ include directory for Ogre to the right location (which is wherever you installed Ogre to). Once that is done, you can just press build to compile the cologre library. 
+
+\section viewer_install Cologre Viewer
+
+Once you have compiled the cologre library, you can use the viewer to test it. Just like for cologre, to build the viewer, you have to point the include directory for Ogre to the right location. Additionaly, the viewer needs OIS for input handling, which comes with the Ogre SDK (or needs to be downloaded seperately in case you downloaded the Ogre sources). For now, you need to specify in the code which model to load, so if you want to use another .dae file than the one provided in the model folder, make sure you do that beofre compiling the viewer. For future versions, I will implement a mechanism to specify the file to load outside of the code.
+
+For the viewer to run, you also need to open 'plugins.cfg' file and change the plugin directory to where the ogre plugin dll's are located.
+
+Once the viewer is running, you can control camera translations by using the w,a,s,d and pageup, pagedown keys and rotations by using the mouse.
+*/
