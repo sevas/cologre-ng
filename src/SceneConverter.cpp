@@ -89,6 +89,7 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
         domInstance_geometryRef instanceGeometryRef = instanceGeometryArray.get(i);
         daeURI uri(instanceGeometryRef->getUrl());
         //uri.resolveURI();
+        uri.getElement();
         domGeometry* pGeometry = daeSafeCast<domGeometry>(&(*uri.getElement()));
 
         Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().getByName(pGeometry->getId());
@@ -113,7 +114,10 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
           //create the scene entity from the mesh and attach it to the transformed scene node
           Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName(), pGeometry->getId());
           if(pEntity)
-            pSceneNode->attachObject(pEntity);
+          {
+              pSceneNode->attachObject(pEntity);
+              pEntity->setNormaliseNormals(true);
+          }
           else
             std::cerr << "Error adding entity " << pEntity->getName() << std::endl;       
         }
@@ -128,7 +132,8 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
         //find the right controller
         domInstance_controllerRef instanceControllerRef = instanceControllerArray.get(i);
         daeURI uri(instanceControllerRef->getUrl());
-        uri.resolveURI();
+        //uri.resolveURI();
+        uri.getElement();
         domController* pController = daeSafeCast<domController>(&(*uri.getElement()));
 
         //find the skin
@@ -222,6 +227,7 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
           if(pEntity)
           {
             pSceneNode->attachObject(pEntity);      
+            pEntity->setNormaliseNormals(true);
             //pEntity->setDisplaySkeleton(true);
           }
           Ogre::SkeletonInstance* pOgreSkeletonInstance = pEntity->getSkeleton();
@@ -236,7 +242,8 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
       {
         domInstance_lightRef instanceLightRef = instanceLightArray.get(i);
         daeURI uri(instanceLightRef->getUrl());
-        uri.resolveURI();
+        //uri.resolveURI();
+        uri.getElement();
         domLight* pLight = daeSafeCast<domLight>(&(*uri.getElement()));
         Ogre::Light* pOgreLight = convertLight(pLight, pOgreSceneManager);
         if(pOgreLight)

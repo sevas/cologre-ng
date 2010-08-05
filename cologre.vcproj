@@ -42,8 +42,8 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="-Zm130"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\include;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\dependencies\collada-dom-2.2\include&quot;;&quot;.\dependencies\collada-dom-2.2\include\1.4&quot;;&quot;$(BOOST136_HOME)&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;"
+				AdditionalIncludeDirectories=".\include;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\dependencies\collada-dom-2.2\include&quot;;&quot;.\dependencies\collada-dom-2.2\include\1.4&quot;;.\dependencies\boost"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -63,9 +63,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libcollada_dae_d.lib libcollada_dom_d.lib libcollada_LIBXMLPlugin_d.lib libcollada_STLDatabase_d.lib libcollada_stdErrPlugin.lib libxml2_a.lib iconv_a.lib zlib.lib"
+				AdditionalDependencies="libcollada14dom21-sd.lib libxml2_a.lib zlib.lib wsock32.lib pcre-d.lib pcrecpp-d.lib minizip-d.lib libboost_filesystem-d.lib libboost_system-d.lib"
 				OutputFile="$(OutDir)\cologred.lib"
-				AdditionalLibraryDirectories=".\external\lib"
+				AdditionalLibraryDirectories="&quot;.\dependencies\collada-dom-2.2\lib&quot;;.\dependencies\minizip\win32\lib;.\dependencies\pcre\lib\vc9\;.\dependencies\tinyxml\lib\vc9\;.\dependencies\libxml2\win32\lib;.\dependencies\boost\lib\vc9\"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -110,7 +110,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="-Zm130"
 				AdditionalIncludeDirectories=".\include;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\dependencies\collada-dom-2.2\include&quot;;&quot;.\dependencies\collada-dom-2.2\include\1.4&quot;;.\dependencies\boost"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -128,9 +128,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libcollada_dae.lib libcollada_dom.lib libcollada_LIBXMLPlugin.lib libcollada_STLDatabase.lib libcollada_stdErrPlugin.lib libxml2_a.lib iconv_a.lib zlib.lib"
+				AdditionalDependencies="libcollada14dom21-s.lib libxml2_a.lib zlib.lib wsock32.lib pcre.lib pcrecpp.lib minizip.lib libboost_filesystem.lib libboost_system.lib"
 				OutputFile="$(OutDir)\cologre.lib"
-				AdditionalLibraryDirectories=".\external\lib"
+				AdditionalLibraryDirectories="&quot;.\dependencies\collada-dom-2.2\lib&quot;;.\dependencies\minizip\win32\lib;.\dependencies\pcre\lib\vc9\;.\dependencies\tinyxml\lib\vc9\;.\dependencies\libxml2\win32\lib;.\dependencies\boost\lib\vc9\"
 			/>
 			<Tool
 				Name="VCALinkTool"

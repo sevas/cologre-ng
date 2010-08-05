@@ -156,10 +156,16 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
   {
   case FX_SURFACE_TYPE_ENUM_2D:
     {
-      //domFx_surface_common_complexType::domInit_from_Array initFromArray = surfaceRef->getInit_from_array();
-      //domFx_surface_common_complexType::domInit_fromRef initFromRef = initFromArray.get(0);
+
+      //  daeElement *initFrom = surfaceRef->getChild("init_from");
+      //                     
+      //  std::string imageFile;
+      //  initFrom->getCharData(imageFile);
+      //
+
+      ///*domFx_surface_init_from_common_Ref initFromRef = initFromArray.get(0);
       //initFromRef->getValue().resolveElement();
-      //pImg = daeSafeCast<domImage>(initFromRef->getValue().getElement());
+      //pImg = daeSafeCast<domImage>(initFromRef->getValue().getElement());*/
       //if(pImg)
       //{
       //  domImage::domInit_fromRef initFromRef = pImg->getInit_from();

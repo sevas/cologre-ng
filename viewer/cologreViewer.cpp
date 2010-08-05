@@ -1,5 +1,8 @@
+#include <Ogre.h>
 #include <OIS/OIS.h>
 #include "cologre.h"
+
+#include <iostream>
 
 using namespace std;
 
@@ -15,21 +18,32 @@ int setupOgre();
 void setupResources();
 void moveCamera(float deltaT);
 
-int main(int argc, char* argv[])
+
+#if OGRE_PLATFORM == PLATFORM_WIN32 || OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+
+INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
+#else
+int main(int argc, char **argv)
+#endif
 {
   setupOgre();
   setupResources();
 
   CColladaDatabase db;
   int ret = 0;
-  if(ret = db.load("../../media/plane_box_light.dae"))
+
+  //
+  if(ret = db.load("../../../media/indochine.DAE"))
     exit(-1);
+
   CResourceConverter::m_convOptions.flipTextureH = true;
   db.convertResources();
   db.convertScene(sceneManager);
 
-  //main loop
-  while(!(oiskb->isKeyDown(OIS::KeyCode::KC_ESCAPE)))
+
+  while(!(oiskb->isKeyDown(OIS::KC_ESCAPE)))
   {
     static int frames;
     long timeMs = GetTickCount();
@@ -56,7 +70,9 @@ int main(int argc, char* argv[])
   }
 
 	// Delete core system
-	delete ogreRoot;
+  ogreRoot->shutdown();
+	delete ogreRoot;     
+
 	return 0;
 }
 
@@ -167,19 +183,19 @@ void moveCamera(float deltaT)
   mouseState.width = window->getWidth();
   mouseState.height = window->getHeight();
 
-  if(oiskb->isKeyDown(OIS::KeyCode::KC_W))
+  if(oiskb->isKeyDown(OIS::KC_W))
     camera->moveRelative(Ogre::Vector3(0.0, 0.0, -50.0 * deltaT));
-  else if(oiskb->isKeyDown(OIS::KeyCode::KC_S))
+  else if(oiskb->isKeyDown(OIS::KC_S))
     camera->moveRelative(Ogre::Vector3(0.0, 0.0, 50.0 * deltaT));
 
-  if(oiskb->isKeyDown(OIS::KeyCode::KC_A))
+  if(oiskb->isKeyDown(OIS::KC_A))
     camera->moveRelative(Ogre::Vector3(-50.0 * deltaT, 0.0, 0.0));
-  else if(oiskb->isKeyDown(OIS::KeyCode::KC_D))
+  else if(oiskb->isKeyDown(OIS::KC_D))
     camera->moveRelative(Ogre::Vector3(50.0 * deltaT, 0.0, 0.0));
 
-  if(oiskb->isKeyDown(OIS::KeyCode::KC_PGUP))
+  if(oiskb->isKeyDown(OIS::KC_PGUP))
     camera->moveRelative(Ogre::Vector3(0.0, 1.0 * deltaT, 0.0));
-  else if(oiskb->isKeyDown(OIS::KeyCode::KC_PGDOWN))
+  else if(oiskb->isKeyDown(OIS::KC_PGDOWN))
     camera->moveRelative(Ogre::Vector3(0.0, -1.0 * deltaT, 0.0));
 
   camera->yaw(Ogre::Radian(Ogre::Degree(mouseState.X.rel)) * deltaT);
