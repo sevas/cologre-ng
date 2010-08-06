@@ -1,0 +1,9 @@
+syntax: glob
+bin/
+dependencies/
+Debug/
+Release/
+lib/
+*.lnk
+*.obj
+*.user
