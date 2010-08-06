@@ -23,7 +23,8 @@ int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreScen
   uri.getElement();
   domVisual_scene* pVisualScene = daeSafeCast<domVisual_scene>(&(*uri.getElement()));
   domNode_Array nodeArray = pVisualScene->getNode_array();
-  buildSceneHirachy(&nodeArray, pRootNode, pOgreSceneManager);
+
+  buildSceneHierarchy(&nodeArray, pRootNode, pOgreSceneManager);
 
   if(!m_hasLight && CConverter::m_convOptions.addDefaultLight == true)
   {
@@ -68,7 +69,7 @@ void CSceneConverter::transformSkeleton(domNode* pNode, Ogre::SkeletonInstance* 
 
 
 
-void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNode *pParentNode, Ogre::SceneManager* pOgreSceneManager)
+void CSceneConverter::buildSceneHierarchy(domNode_Array *pNodeArray, Ogre::SceneNode *pParentNode, Ogre::SceneManager* pOgreSceneManager)
 {
   for(unsigned int i = 0; i < pNodeArray->getCount(); ++i)
   {
@@ -76,6 +77,7 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
     domNodeRef nodeRef = pNodeArray->get(i);
     if(nodeRef->getType() != NODETYPE_JOINT)
     {
+        xsID nodeID = nodeRef->getID();
       pSceneNode = pParentNode->createChildSceneNode(nodeRef->getId());
 
       //create scene instances from geometry
@@ -146,7 +148,7 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
         std::string strSkeletonName(pNode->getID());
         if(Ogre::SkeletonManager::getSingleton().getByName(strSkeletonName).isNull())
         {
-          Ogre::SkeletonPtr pOgreSkeleton = Ogre::SkeletonManager::getSingleton().create(pNode->getId(), "Custom");
+          Ogre::SkeletonPtr pOgreSkeleton = Ogre::SkeletonManager::getSingleton().create(pNode->getId(), "DaeCustom");
           if(bindMaterialRef)
           {
             //create all the bones, but do not yet transform them, because the mesh is not bound to the skeleton yet
@@ -257,7 +259,7 @@ void CSceneConverter::buildSceneHirachy(domNode_Array *pNodeArray, Ogre::SceneNo
 
       domNode_Array nodeArray = nodeRef->getNode_array();
       if(nodeArray.getCount())
-        buildSceneHirachy(&nodeArray, pSceneNode, pOgreSceneManager);
+        buildSceneHierarchy(&nodeArray, pSceneNode, pOgreSceneManager);
         
     }
   }
@@ -374,9 +376,16 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
     }
 
     else
-      pOgreLight->setAttenuation(attenuationRange, pointRef->getConstant_attenuation()->getValue(),
-                                                   pointRef->getLinear_attenuation()->getValue(),
-                                                   pointRef->getQuadratic_attenuation()->getValue());
+    {
+        if(pointRef->getConstant_attenuation() && 
+            pointRef->getLinear_attenuation() && 
+            pointRef->getQuadratic_attenuation())
+        {
+            pOgreLight->setAttenuation(attenuationRange, pointRef->getConstant_attenuation()->getValue(),
+                                                        pointRef->getLinear_attenuation()->getValue(),
+                                                        pointRef->getQuadratic_attenuation()->getValue());
+        }
+    }
   }
 
   else if(domLight::domTechnique_common::domDirectionalRef directRef = techniqueCommonRef->getDirectional())

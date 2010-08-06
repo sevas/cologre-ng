@@ -29,7 +29,7 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
       id = strTmp.str().c_str();
     }
 
-    Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().create(id, "Custom");
+    Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().create(id, "DaeCustom");
     pOgreMat->removeAllTechniques();
 
     domInstance_effectRef fxRef = pMat->getInstance_effect();
@@ -157,30 +157,44 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
   case FX_SURFACE_TYPE_ENUM_2D:
     {
 
-      //  daeElement *initFrom = surfaceRef->getChild("init_from");
-      //                     
-      //  std::string imageFile;
-      //  initFrom->getCharData(imageFile);
-      //
+        // get image handle
+        daeElement *initFrom = surfaceRef->getChild("init_from");
+                           
+        std::string imageFile;
+        initFrom->getCharData(imageFile);
+        
+        // find image in library
+        daeDocument *doc = initFrom->getDocument();
+        daeDatabase *db = initFrom->getDAE()->getDatabase();
 
-      ///*domFx_surface_init_from_common_Ref initFromRef = initFromArray.get(0);
-      //initFromRef->getValue().resolveElement();
-      //pImg = daeSafeCast<domImage>(initFromRef->getValue().getElement());*/
-      //if(pImg)
-      //{
-      //  domImage::domInit_fromRef initFromRef = pImg->getInit_from();
-      //  std::string file = initFromRef->getValue().getFilepath();
-      //  file = file.substr(1); //removes the first / of the filepath
-      //  static std::string location = "";
-      //  if(location != file)
-      //  {
-      //    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(file, "FileSystem", "Textures");
-      //    location = file;
-      //  }
-      //  file = initFromRef->getValue().getFile();
-      //  pOgreTexture = Ogre::TextureManager::getSingleton().load(file, "Textures", Ogre::TEX_TYPE_2D);
-      //  pOgreTextureUnitState = pOgrePass->createTextureUnitState(file, 0);
-      //}
+        pImg = daeSafeCast<domImage>(db->idLookup(imageFile, doc));
+
+                                            
+      if(pImg)
+      {
+        domImage::domInit_fromRef initFromRef = pImg->getInit_from();
+
+        xsAnyURI imageURI = initFromRef->getValue();
+        std::string basename, path;
+
+        std::string originalURI(imageURI.getOriginalURI());
+        
+        Ogre::StringUtil::splitFilename(originalURI, basename, path);
+
+        static std::string location = "";
+        if(location != path)
+        {
+            path = "../../media_2/"+path;
+            Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
+          
+          location = path;
+        }
+
+        pOgreTexture = Ogre::TextureManager::getSingleton().load(basename, "DaeCustom", Ogre::TEX_TYPE_2D);
+        pOgreTextureUnitState = pOgrePass->createTextureUnitState(basename, 0);
+      }
+
+
       break;
     }
   default:

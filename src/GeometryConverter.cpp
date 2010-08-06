@@ -159,7 +159,7 @@ void CGeometryConverter::addVertexWeights(domSkin *pSkin)
 
 void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM)
 {
-  Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().createManual(pIM->m_meshName, "Custom");
+  Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().createManual(pIM->m_meshName, "DaeCustom");
   pOgreMesh->sharedVertexData = new Ogre::VertexData();
   Ogre::VertexDeclaration* pDecl = pOgreMesh->sharedVertexData->vertexDeclaration;
   Ogre::AxisAlignedBox aaBB;
