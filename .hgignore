@@ -7,3 +7,5 @@ lib/
 *.lnk
 *.obj
 *.user
+*.ncb
+*.suo
