@@ -184,7 +184,7 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         static std::string location = "";
         if(location != path)
         {
-            path = "../../media_2/"+path;
+            path = "../../media/"+path;
             Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
           
           location = path;
