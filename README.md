@@ -23,15 +23,8 @@ Future work includes :
 
 # Licence
 
-MIT
+`cologre-ng` is released under the MIT License, which is a permissive open source license. The only condition is that you distribute the license text included in our distribution with any software that uses OGRE.
+The parts coming from the `cologre` project remains licenced under the LGPL licence.
 
 
 
-
-
-
-
-
-
-.. [collada-dom] 
-.. [cologre] 
