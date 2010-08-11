@@ -2,7 +2,9 @@
 #include "dae/daeSIDResolver.h"
 #include "dae/daeIDRef.h"
 #include "dom/domEffect.h"
-#include "dom/domMaterial.h"
+#include "dom/domMaterial.h"     
+
+#include "Utility.h"
 
 CMaterialConverter::CMaterialConverter(void)  : CResourceConverter()
 {
@@ -184,7 +186,8 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         static std::string location = "";
         if(location != path)
         {
-            path = "../../media/"+path;
+            //path = "../../media/"+path;
+            path = convertUriToPath(path);
             Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
           
           location = path;
