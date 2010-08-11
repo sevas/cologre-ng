@@ -14,16 +14,17 @@ Future work includes :
 
 - Ogre 1.4
 - collada-dom 2.2
+- boost
 - pcre
 - libxml2
 - tinyxml
-- boost
+- minizip
 
 
 
 # Licence
 
-`cologre-ng` is released under the MIT License, which is a permissive open source license. The only condition is that you distribute the license text included in our distribution with any software that uses OGRE.
+`cologre-ng` is released under the MIT License, which is a permissive open source license. The only condition is that you distribute the license text included in our distribution with any software that uses `cologre-ng`.
 The parts coming from the `cologre` project remains licenced under the LGPL licence.
 
 
