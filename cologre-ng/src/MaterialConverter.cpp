@@ -1,3 +1,4 @@
+#include "cologre_ng_precompiled.h"
 #include "MaterialConverter.h"
 #include "dae/daeSIDResolver.h"
 #include "dae/daeIDRef.h"
@@ -186,7 +187,6 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         static std::string location = "";
         if(location != path)
         {
-            //path = "../../media/"+path;
             path = convertUriToPath(path);
             Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
           

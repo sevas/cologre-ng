@@ -1,3 +1,4 @@
+#include "cologre_ng_precompiled.h"
 #include "SceneConverter.h"
 #include "dom/domCollada.h"
 #include "dom/domLight.h"

@@ -1,3 +1,4 @@
+#include "cologre_ng_precompiled.h"
 #include "ResourceConverter.h"
 
 unsigned int CResourceConverter::m_uiElementCounter = 0;

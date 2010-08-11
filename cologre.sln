@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cologre", "cologre.vcproj", "{E5910EAA-87A7-47E9-B192-B56CF4F86FE7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cologre-ng", "cologre-ng\cologre.vcproj", "{E5910EAA-87A7-47E9-B192-B56CF4F86FE7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ogre-cologre-test", "ogre-cologre-test\ogre-cologre-test.vcproj", "{FD33ACB0-6E94-44FF-AB35-BD24330D4B20}"
 	ProjectSection(ProjectDependencies) = postProject

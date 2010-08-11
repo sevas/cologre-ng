@@ -18,8 +18,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)/lib"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="lib\"
+			IntermediateDirectory="obj\$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			>
@@ -42,12 +42,13 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="-Zm130"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\include;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\dependencies\collada-dom-2.2\include&quot;;&quot;.\dependencies\collada-dom-2.2\include\1.4&quot;;.\dependencies\boost"
+				AdditionalIncludeDirectories=".\include;.\utility;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include\1.4&quot;;.\..\dependencies\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="cologre_ng_precompiled.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -65,7 +66,7 @@
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libcollada14dom21-sd.lib libxml2_a.lib zlib.lib wsock32.lib pcre-d.lib pcrecpp-d.lib minizip-d.lib libboost_filesystem-d.lib libboost_system-d.lib"
 				OutputFile="$(OutDir)\cologred.lib"
-				AdditionalLibraryDirectories="&quot;.\dependencies\collada-dom-2.2\lib&quot;;.\dependencies\minizip\win32\lib;.\dependencies\pcre\lib\vc9\;.\dependencies\tinyxml\lib\vc9\;.\dependencies\libxml2\win32\lib;.\dependencies\boost\lib\vc9\"
+				AdditionalLibraryDirectories="&quot;.\..\dependencies\collada-dom-2.2\lib&quot;;.\..\dependencies\minizip\win32\lib;.\..\dependencies\pcre\lib\vc9\;.\..\dependencies\tinyxml\lib\vc9\;.\..\dependencies\libxml2\win32\lib;.\..\dependencies\boost\lib\vc9\"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -85,8 +86,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)/lib"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="lib\"
+			IntermediateDirectory="obj\$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -109,10 +110,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="-Zm130"
-				AdditionalIncludeDirectories=".\include;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\dependencies\collada-dom-2.2\include&quot;;&quot;.\dependencies\collada-dom-2.2\include\1.4&quot;;.\dependencies\boost"
+				AdditionalIncludeDirectories=".\include;.\utility;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include\1.4&quot;;.\..\dependencies\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				RuntimeLibrary="2"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="cologre_ng_precompiled.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
@@ -130,7 +132,7 @@
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libcollada14dom21-s.lib libxml2_a.lib zlib.lib wsock32.lib pcre.lib pcrecpp.lib minizip.lib libboost_filesystem.lib libboost_system.lib"
 				OutputFile="$(OutDir)\cologre.lib"
-				AdditionalLibraryDirectories="&quot;.\dependencies\collada-dom-2.2\lib&quot;;.\dependencies\minizip\win32\lib;.\dependencies\pcre\lib\vc9\;.\dependencies\tinyxml\lib\vc9\;.\dependencies\libxml2\win32\lib;.\dependencies\boost\lib\vc9\"
+				AdditionalLibraryDirectories="&quot;.\..\dependencies\collada-dom-2.2\lib&quot;;.\..\dependencies\minizip\win32\lib;.\..\dependencies\pcre\lib\vc9\;.\..\dependencies\tinyxml\lib\vc9\;.\..\dependencies\libxml2\win32\lib;.\..\dependencies\boost\lib\vc9\"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -157,80 +159,128 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\src\ColladaDatabase.cpp"
+			<Filter
+				Name="cologre"
 				>
-			</File>
-			<File
-				RelativePath=".\src\ControllerConverter.cpp"
+				<File
+					RelativePath=".\src\ColladaDatabase.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\cologre_ng_precompiled.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="1"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="1"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\ControllerConverter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\Converter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\GeometryConverter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\IntermediateMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\MaterialConverter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\ResourceConverter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\SceneConverter.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="utility"
 				>
-			</File>
-			<File
-				RelativePath=".\src\Converter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\GeometryConverter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\IntermediateMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\MaterialConverter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\ResourceConverter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\SceneConverter.cpp"
-				>
-			</File>
+				<File
+					RelativePath=".\utility\Utility.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\include\ColladaDatabase.h"
+			<Filter
+				Name="cologre"
 				>
-			</File>
-			<File
-				RelativePath=".\include\cologre.h"
+				<File
+					RelativePath=".\include\ColladaDatabase.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\cologre.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\cologre_ng_precompiled.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\ControllerConverter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\Converter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\GeometryConverter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\IntermediateMesh.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\MaterialConverter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\ResourceConverter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\SceneConverter.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="utility"
 				>
-			</File>
-			<File
-				RelativePath=".\include\ControllerConverter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\Converter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\GeometryConverter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\IntermediateMesh.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\MaterialConverter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\ResourceConverter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\SceneConverter.h"
-				>
-			</File>
+				<File
+					RelativePath=".\utility\Utility.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

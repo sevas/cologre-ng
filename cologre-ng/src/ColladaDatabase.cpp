@@ -1,3 +1,4 @@
+#include "cologre_ng_precompiled.h"
 #include "ColladaDatabase.h"
 #include "ResourceConverter.h"
 #include "GeometryConverter.h"

@@ -1,3 +1,4 @@
+#include "cologre_ng_precompiled.h"
 #include "ControllerConverter.h"
 #include "dom/domController.h"
 

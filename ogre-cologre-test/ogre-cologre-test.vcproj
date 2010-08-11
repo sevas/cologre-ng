@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(OGRE14_HOME)\include&quot;;..\include;&quot;..\dependencies\collada-dom-2.2\include&quot;;&quot;..\dependencies\collada-dom-2.2\include\1.4&quot;;..\dependencies\boost"
+				AdditionalIncludeDirectories="&quot;$(OGRE14_HOME)\include&quot;;&quot;..\cologre-ng\include&quot;;&quot;..\dependencies\collada-dom-2.2\include&quot;;&quot;..\dependencies\collada-dom-2.2\include\1.4&quot;;..\dependencies\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,7 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="OgreMain_d.lib OIS_d.lib cologred.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OGRE14_HOME)\lib&quot;;..\lib;&quot;..\dependencies\collada-dom-2.2\lib&quot;;..\dependencies\boost\lib\vc9"
+				AdditionalLibraryDirectories="&quot;$(OGRE14_HOME)\lib&quot;;&quot;..\cologre-ng\lib&quot;;&quot;..\dependencies\collada-dom-2.2\lib&quot;;..\dependencies\boost\lib\vc9"
 				IgnoreDefaultLibraryNames="msvcrt"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -118,7 +118,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(OGRE14_HOME)\include&quot;;..\include;&quot;..\dependencies\collada-dom-2.2\include&quot;;&quot;..\dependencies\collada-dom-2.2\include\1.4&quot;;..\dependencies\boost"
+				AdditionalIncludeDirectories="&quot;$(OGRE14_HOME)\include&quot;;&quot;..\cologre-ng\include&quot;;&quot;..\dependencies\collada-dom-2.2\include&quot;;&quot;..\dependencies\collada-dom-2.2\include\1.4&quot;;..\dependencies\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -139,7 +139,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="OgreMain.lib OIS.lib cologre.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(OGRE14_HOME)\lib&quot;;..\lib;&quot;..\dependencies\collada-dom-2.2\lib&quot;;..\dependencies\boost\lib\vc9"
+				AdditionalLibraryDirectories="&quot;$(OGRE14_HOME)\lib&quot;;&quot;..\cologre-ng\lib&quot;;&quot;..\dependencies\collada-dom-2.2\lib&quot;;..\dependencies\boost\lib\vc9"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -189,10 +189,6 @@
 				RelativePath=".\main.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\Utility.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -213,10 +209,6 @@
 			</File>
 			<File
 				RelativePath=".\GridBuilder.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Utility.h"
 				>
 			</File>
 		</Filter>
