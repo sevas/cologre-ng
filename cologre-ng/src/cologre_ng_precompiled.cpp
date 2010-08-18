@@ -1,0 +1,1 @@
+#include "cologre_ng_precompiled.h"
