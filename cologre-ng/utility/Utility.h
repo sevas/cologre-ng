@@ -4,9 +4,8 @@
 
 
 #include <string>
-#include <OgreString.h>
-#include <OgreStringConverter.h>
 
-
+std::string makeFullUri(const std::string &_scheme, const std::string &_path);
 std::string convertUriToPath(const std::string &_uri);
+
 #endif 

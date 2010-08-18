@@ -1,12 +1,34 @@
 #include "cologre_ng_precompiled.h"
 #include "Utility.h"
-#include <vector>
-#include <numeric>
+#ifdef _DEBUG
+#include <cassert>
+#endif
+#include <sstream>
 
-std::string convertUriToPath(const std::string &_uri)
+#include <uriparser/Uri.h>
+
+
+//-----------------------------------------------------------------------------
+std::string makeFullUri(const std::string &_scheme, const std::string &_path)
 {
-    std::vector<std::string> UriFragments = Ogre::StringUtil::split(_uri, "%20");
-
-    return std::accumulate( UriFragments.begin(), UriFragments.end(), std::string(" ") );
-
+    std::string sep("://");
+    return std::string(_scheme+sep+_path);
 }
+//-----------------------------------------------------------------------------
+std::string convertUriToPath(const std::string &_uri)
+{    
+    size_t len = _uri.size() + 1 - 8;
+    char *filename = new char[len];
+
+    if(uriUriStringToWindowsFilenameA(_uri.c_str(), filename) != 0)
+    {
+        // TODO : error logging
+    }
+    
+
+    std::string s(filename);
+    delete[] filename;
+
+    return s;
+}
+
