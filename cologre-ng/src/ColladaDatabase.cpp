@@ -2,7 +2,9 @@
 #include "ColladaDatabase.h"
 
 #include <sstream>
-
+#ifdef _DEBUG
+#include <cassert>
+#endif
 
 #include "ResourceConverter.h"
 #include "GeometryConverter.h"
@@ -10,37 +12,45 @@
 #include "ControllerConverter.h"
 #include "SceneConverter.h"
 
+//------------------------------------------------------------------------------
+const std::string CColladaDatabase::s_LogFilename("cologre_ng.log");
+//------------------------------------------------------------------------------
 CColladaDatabase::CColladaDatabase()
 {
     m_pDae = NULL;
     m_pDatabase = NULL;
 
-    m_pLogger = NULL;
+    m_pLog = NULL;
     m_spLocations = LocationsPtr(new Locations);
 }
 
 CColladaDatabase::~CColladaDatabase()
 {
-  if(m_pDae)
-  {
-    delete m_pDae;
-    m_pDae = NULL;
-  }
+    if(m_pDae)
+    {
+        delete m_pDae;
+        m_pDae = NULL;
+    }
 }
 
 int CColladaDatabase::load(std::string filename)
 {
-    m_pLogger = Ogre::LogManager::getSingletonPtr()->createLog("cologre_ng.log");
+    _initLogger();
+
+    std::stringstream s;
+    s << "Loading DAE file : " << filename;
+    _logMessage(s.str());
 
     m_pDae = new DAE();
     if(m_pDae->load(filename.c_str(), 0))
     {
         std::stringstream s;
         s << "DAE object not initialized! Probably .dae file " << filename << " not found.";
-        m_pLogger->logMessage(s.str());
+        _logMessage(s.str());
 
         return 1;
     }
+
     m_pDatabase = m_pDae->getDatabase();
     parseAsset();
     return 0;
@@ -53,7 +63,7 @@ void CColladaDatabase::convertResources()
     pResConv->convert(m_pDatabase);
     delete pResConv;
 
-    pResConv = new CMaterialConverter(m_pLogger, m_spLocations);
+    pResConv = new CMaterialConverter(m_pLog, m_spLocations);
     pResConv->convert(m_pDatabase);
     delete pResConv;
 
@@ -83,5 +93,17 @@ void CColladaDatabase::parseAsset()
     if(upAxisRef->hasValue() && upAxisRef->getValue() == UPAXISTYPE_Z_UP)
       CConverter::m_zUp = true;
   }
+}  
+//-----------------------------------------------------------------------------
+void CColladaDatabase::_initLogger()
+{
+    m_pLog = Ogre::LogManager::getSingletonPtr()->createLog(s_LogFilename);
 }
-  
+//-----------------------------------------------------------------------------
+void CColladaDatabase::_logMessage(const std::string &_msg)
+{
+#ifdef _DEBUG
+    assert(m_pLog);
+#endif
+    m_pLog->logMessage(_msg);
+}

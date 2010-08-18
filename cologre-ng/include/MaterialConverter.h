@@ -16,7 +16,7 @@ class CMaterialConverter : public CResourceConverter
 {
 public:
     ///Constructor
-    CMaterialConverter(Ogre::Log *_logger, LocationsPtr _locations);
+    CMaterialConverter(Ogre::Log *_log, LocationsPtr _locations);
     ///Destructor
     virtual ~CMaterialConverter(void);
 
@@ -30,6 +30,12 @@ public:
       @return 0 if succeeded, 1 upon error, prints error message to stderr
     */
     int convert(daeDatabase* pDatabase);
+
+
+protected:
+    PathBasename _getPathBasenameFromUri(xsAnyURI _uri);
+
+
 
 protected:
     ///adds COMMON techniques as techniques of the passed Ogre material

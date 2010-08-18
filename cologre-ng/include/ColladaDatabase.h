@@ -53,6 +53,10 @@ public:
     void convertScene(Ogre::SceneManager* pOgreSceneManager);
 
 protected:
+    void _initLogger();  
+    void _logMessage(const std::string &_msg);         
+
+protected:
     /// the dae object
     DAE* m_pDae;
     ///the database belonging to the Dae object
@@ -60,8 +64,11 @@ protected:
     ///parses the asset tag of the database
     void parseAsset();
 
+    /// filename to use for the log file
+    static const std::string s_LogFilename;
+
     /// Ogre logger
-    Ogre::Log *m_pLogger;
+    Ogre::Log *m_pLog;
     /// Keeps track of the already added filesystem locations
     LocationsPtr m_spLocations;
 

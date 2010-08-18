@@ -1,6 +1,10 @@
 #include "cologre_ng_precompiled.h"
 #include "MaterialConverter.h"
 
+#ifdef _DEBUG
+#include <cassert>
+#endif
+
 #include <dae/daeSIDResolver.h>
 #include <dae/daeIDRef.h>
 #include <dom/domEffect.h>
@@ -8,16 +12,22 @@
 
 #include "Utility.h"
 
-CMaterialConverter::CMaterialConverter(Ogre::Log *_logger, LocationsPtr _locations)  : CResourceConverter()
+//-----------------------------------------------------------------------------
+CMaterialConverter::CMaterialConverter(Ogre::Log *_log, LocationsPtr _locations)  
+    :CResourceConverter()
+    ,m_spLocations(_locations)
+    ,m_pLog(_log)
 {
-
-  //Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().load("OgreCore.material", "Custom");
+#ifdef _DEBUG
+    assert(m_pLog);
+#endif  
+    //Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().load("OgreCore.material", "Custom");
 }
-
+//-----------------------------------------------------------------------------
 CMaterialConverter::~CMaterialConverter(void)
 {
 }
-
+//-----------------------------------------------------------------------------
 int CMaterialConverter::convert(daeDatabase* pDatabase)
 {
     unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
@@ -64,7 +74,7 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
     }
     return 0;
 }
-
+//-----------------------------------------------------------------------------
 void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniqueRef techRef, Ogre::MaterialPtr pMat)
 {
   Ogre::Technique* pOgreTech = pMat->createTechnique();
@@ -117,131 +127,134 @@ void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniq
     pOgrePass->setSpecular(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2],  colorRef->getValue()[3]);
   }
 }
-
+//-----------------------------------------------------------------------------
 void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_complexType::domTextureRef textureRef, Ogre::Pass* pOgrePass)
 {
-  daeElementRef elemRef;
-  domFx_sampler2D_commonRef sampler2dRef;
-  domFx_surface_commonRef surfaceRef;
-  domImage* pImg = NULL;
-  Ogre::TexturePtr pOgreTexture;
-  Ogre::TextureUnitState* pOgreTextureUnitState = NULL;
+    daeElementRef elemRef;
+    domFx_sampler2D_commonRef sampler2dRef;
+    domFx_surface_commonRef surfaceRef;
+    domImage* pImg = NULL;
+    Ogre::TexturePtr pOgreTexture;
+    Ogre::TextureUnitState* pOgreTextureUnitState = NULL;
 
-  xsNCName texName = textureRef->getTexture();
-  std::string strTarget = texName;
-  strTarget = "./" + strTarget;
-  daeSIDResolver res(textureRef->getDocument()->getDomRoot(), strTarget.c_str(), NULL);
-  elemRef = res.getElement();
+    xsNCName texName = textureRef->getTexture();
+    std::string strTarget = texName;
+    strTarget = "./" + strTarget;
+    daeSIDResolver res(textureRef->getDocument()->getDomRoot(), strTarget.c_str(), NULL);
+    elemRef = res.getElement();
 
-  domCommon_newparam_type* pNewparam = NULL;
-  if(elemRef)
-    pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
-  else
-  {
-    std::cerr << "Could not resolve to sampler2d for texture " << strTarget << std::endl;
-    return;
-  }
-
-  sampler2dRef = pNewparam->getSampler2D();
-  strTarget = sampler2dRef->getSource()->getValue();
-  strTarget = "./" + strTarget;
-  res.setTarget(strTarget.c_str());
-  elemRef = res.getElement();
-
-  if(elemRef)
-    pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
-  else
-  {
-    std::cerr << "Could not resolve to surface for sampler2d " << strTarget << std::endl;
-    return;
-  }
-
-  surfaceRef = pNewparam->getSurface();
-  switch(surfaceRef->getType())
-  {
-  case FX_SURFACE_TYPE_ENUM_2D:
+    domCommon_newparam_type* pNewparam = NULL;
+    if(elemRef)
+        pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
+    else
     {
+        std::stringstream s;
+        s << "Could not resolve to sampler2d for texture " << strTarget;
+        m_pLog->logMessage(s.str());
+        return;
+    }
 
-        // get image handle
-        daeElement *initFrom = surfaceRef->getChild("init_from");
+    sampler2dRef = pNewparam->getSampler2D();
+    strTarget = sampler2dRef->getSource()->getValue();
+    strTarget = "./" + strTarget;
+    res.setTarget(strTarget.c_str());
+    elemRef = res.getElement();
+
+    if(elemRef)
+        pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
+    else
+    {
+        std::stringstream s;
+        s << "Could not resolve to surface for sampler2d " << strTarget ;
+        m_pLog->logMessage(s.str());
+        return;
+    }
+
+    surfaceRef = pNewparam->getSurface();
+    switch(surfaceRef->getType())
+    {
+    case FX_SURFACE_TYPE_ENUM_2D:
+        {
+
+            // get image handle
+            daeElement *initFrom = surfaceRef->getChild("init_from");
                            
-        std::string imageFile;
-        initFrom->getCharData(imageFile);
+            std::string imageFile;
+            initFrom->getCharData(imageFile);
         
-        // find image in library
-        daeDocument *doc = initFrom->getDocument();
-        daeDatabase *db = initFrom->getDAE()->getDatabase();
+            // find image in library
+            daeDocument *doc = initFrom->getDocument();
+            daeDatabase *db = initFrom->getDAE()->getDatabase();
 
-        pImg = daeSafeCast<domImage>(db->idLookup(imageFile, doc));
+            pImg = daeSafeCast<domImage>(db->idLookup(imageFile, doc));
 
                                             
-      if(pImg)
-      {
-        domImage::domInit_fromRef initFromRef = pImg->getInit_from();
+            if(pImg)
+            {
+                domImage::domInit_fromRef initFromRef = pImg->getInit_from();
 
-        xsAnyURI imageURI = initFromRef->getValue();    
+                xsAnyURI imageURI = initFromRef->getValue();    
+                PathBasename pathBasename = _getPathBasenameFromUri(imageURI);
 
-        std::string uriPath = imageURI.getPath();
-        std::string uriScheme = imageURI.getScheme();
+                if(m_spLocations->find(pathBasename.first) == m_spLocations->end())
+                {
+                    std::stringstream s;
+                    s << "Adding location " << pathBasename.first << " resource manager";
+                    m_pLog->logMessage(s.str());
 
-        std::string qualifiedName = convertUriToPath(makeFullUri(uriScheme, uriPath));
+                    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(pathBasename.first, "FileSystem", "DaeCustom");
+                }
+                else                
+                {
+                    std::stringstream s;
+                    s << "Location " << pathBasename.first << " already added to resource manager";
+                    m_pLog->logMessage(s.str());
+                }
 
-
-        std::string basename, path;
-        Ogre::StringUtil::splitFilename(qualifiedName, basename, path);
-
-
-        //static std::string location = "";
-        //if(location != path)
-        //{
-        //    //path = convertUriToPath(path);
-        //    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
-        //  
-        //    location = path;
-        //}
-
-        //pOgreTexture = Ogre::TextureManager::getSingleton().load(basename, "DaeCustom", Ogre::TEX_TYPE_2D);
-        //pOgreTextureUnitState = pOgrePass->createTextureUnitState(basename, 0);
-      }
+                std::stringstream s;
+                s << "Loading 2D image : " << pathBasename.second;
+                m_pLog->logMessage(s.str());
 
 
-      break;
+                pOgreTexture = Ogre::TextureManager::getSingleton().load(pathBasename.second, "DaeCustom", Ogre::TEX_TYPE_2D);
+                pOgreTextureUnitState = pOgrePass->createTextureUnitState(pathBasename.second, 0);
+            }
+            break;
+        }
+    default:
+        break;
     }
-  default:
-    break;
-  }
 
-  if(!(pOgreTexture.isNull()))
-  {
-    xsToken imgFormat;
-    domFx_surface_common_complexType::domFormatRef formatRef;
-    if(formatRef = surfaceRef->getFormat())
+    if(!(pOgreTexture.isNull()))
     {
-      imgFormat = formatRef->getValue();
-      setImageFormat(imgFormat, pOgreTexture);
+        xsToken imgFormat;
+        domFx_surface_common_complexType::domFormatRef formatRef;
+        if(formatRef = surfaceRef->getFormat())
+        {
+            imgFormat = formatRef->getValue();
+            setImageFormat(imgFormat, pOgreTexture);
+        }
+        else if(imgFormat = pImg->getFormat())
+            setImageFormat(imgFormat, pOgreTexture);
+
+        unsigned int imgHeight = pImg->getHeight();
+        if(imgHeight)
+            pOgreTexture->setHeight(imgHeight);
+
+        unsigned int imgWidth = pImg->getWidth();
+        if(imgWidth)
+            pOgreTexture->setHeight(imgWidth);
+
+        setSamplerAttributes(sampler2dRef, pOgreTextureUnitState);
     }
-    else if(imgFormat = pImg->getFormat())
-      setImageFormat(imgFormat, pOgreTexture);
-
-    unsigned int imgHeight = pImg->getHeight();
-    if(imgHeight)
-      pOgreTexture->setHeight(imgHeight);
-
-    unsigned int imgWidth = pImg->getWidth();
-    if(imgWidth)
-      pOgreTexture->setHeight(imgWidth);
-
-    setSamplerAttributes(sampler2dRef, pOgreTextureUnitState);
-  }
-
 }
-
+//-----------------------------------------------------------------------------
 void CMaterialConverter::setImageFormat(const xsToken colladaFormat, Ogre::TexturePtr pOgreTexture)
 {
   if(colladaFormat == "A8R8G8B8")
     pOgreTexture->setFormat(Ogre::PF_A8R8G8B8);
 }
-
+//-----------------------------------------------------------------------------
 void CMaterialConverter::setSamplerAttributes(const domFx_sampler2D_commonRef sampler2dRef, Ogre::TextureUnitState *pTextureUnitState)
 {
   Ogre::FilterOptions foMinFilter = Ogre::FO_ANISOTROPIC;
@@ -315,3 +328,18 @@ void CMaterialConverter::setSamplerAttributes(const domFx_sampler2D_commonRef sa
 
   //for later : maybe support texture wrapping modes, for now just leave it at the ogre default
 }
+//-----------------------------------------------------------------------------
+PathBasename CMaterialConverter::_getPathBasenameFromUri(xsAnyURI _uri)
+{
+    std::string uriPath = _uri.getPath();
+    std::string uriScheme = _uri.getScheme();
+
+    std::string qualifiedName = convertUriToPath(makeFullUri(uriScheme, uriPath));
+
+
+    std::string basename, path;
+    Ogre::StringUtil::splitFilename(qualifiedName, basename, path);
+
+    return PathBasename(path, basename);
+}
+//-----------------------------------------------------------------------------
