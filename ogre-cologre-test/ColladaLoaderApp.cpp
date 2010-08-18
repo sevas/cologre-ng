@@ -16,9 +16,9 @@ void ColladaLoaderApp::createScene()
     //
     //if(ret = db.load("../../../media/indochine.DAE"))
     //exit(-1);
-    ret = db.load("../../media_2/indochine.dae")  ;
+    ret = db.load("../../media/cube.dae");
     //assert(ret != 0);              
-    //CResourceConverter::m_convOptions.flipTextureH = true;
+
     db.convertResources();
     _dumpResourceList();
 

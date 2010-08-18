@@ -1,14 +1,16 @@
 #include "cologre_ng_precompiled.h"
 #include "MaterialConverter.h"
-#include "dae/daeSIDResolver.h"
-#include "dae/daeIDRef.h"
-#include "dom/domEffect.h"
-#include "dom/domMaterial.h"     
+
+#include <dae/daeSIDResolver.h>
+#include <dae/daeIDRef.h>
+#include <dom/domEffect.h>
+#include <dom/domMaterial.h>     
 
 #include "Utility.h"
 
-CMaterialConverter::CMaterialConverter(void)  : CResourceConverter()
+CMaterialConverter::CMaterialConverter(Ogre::Log *_logger, LocationsPtr _locations)  : CResourceConverter()
 {
+
   //Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().load("OgreCore.material", "Custom");
 }
 
@@ -18,49 +20,49 @@ CMaterialConverter::~CMaterialConverter(void)
 
 int CMaterialConverter::convert(daeDatabase* pDatabase)
 {
-  unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
-  for(unsigned int i = 0; i < numElements; i++)
-  {
-    daeElement* pElement = NULL;
-    pDatabase->getElement(&pElement, i, NULL, "material", NULL);
-    domMaterial* pMat = (domMaterial*)pElement;
-    xsID id = pMat->getId();
-    if(!id)
+    unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
+    for(unsigned int i = 0; i < numElements; i++)
     {
-      std::stringstream strTmp;
-      strTmp << "Material_" << m_uiElementCounter << std::endl;
-      id = strTmp.str().c_str();
-    }
-
-    Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().create(id, "DaeCustom");
-    pOgreMat->removeAllTechniques();
-
-    domInstance_effectRef fxRef = pMat->getInstance_effect();
-    daeElementRef fxElementRef = fxRef->getUrl().getElement();
-    if(fxElementRef->getElementType() == COLLADA_TYPE::EFFECT)
-    {
-      domEffect* pFx = (domEffect*) (&(*fxElementRef));
-      domFx_profile_abstract_Array fxProfileArray = pFx->getFx_profile_abstract_array();
-      for(unsigned int i = 0; i < fxProfileArray.getCount(); i++)
-      {
-        switch((*(fxProfileArray[i])).getElementType())
+        daeElement* pElement = NULL;
+        pDatabase->getElement(&pElement, i, NULL, "material", NULL);
+        domMaterial* pMat = (domMaterial*)pElement;
+        xsID id = pMat->getId();
+        if(!id)
         {
-        case COLLADA_TYPE::PROFILE_COMMON:
-          {
-            domProfile_COMMON* pProfileCommon = (domProfile_COMMON*) &(*fxProfileArray[i]);
-            domProfile_COMMON::domTechniqueRef techRef = pProfileCommon->getTechnique();
-            addTechnique_COMMON(techRef, pOgreMat);
-
-            break;
-          }
-          
-        default:
-          break;
+            std::stringstream strTmp;
+            strTmp << "Material_" << m_uiElementCounter << std::endl;
+            id = strTmp.str().c_str();
         }
-      }
+
+        Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().create(id, "DaeCustom");
+        pOgreMat->removeAllTechniques();
+
+        domInstance_effectRef fxRef = pMat->getInstance_effect();
+        daeElementRef fxElementRef = fxRef->getUrl().getElement();
+        if(fxElementRef->getElementType() == COLLADA_TYPE::EFFECT)
+        {
+            domEffect* pFx = (domEffect*) (&(*fxElementRef));
+            domFx_profile_abstract_Array fxProfileArray = pFx->getFx_profile_abstract_array();
+            for(unsigned int i = 0; i < fxProfileArray.getCount(); i++)
+            {
+                switch((*(fxProfileArray[i])).getElementType())
+                {
+                case COLLADA_TYPE::PROFILE_COMMON:
+                    {
+                        domProfile_COMMON* pProfileCommon = (domProfile_COMMON*) &(*fxProfileArray[i]);
+                        domProfile_COMMON::domTechniqueRef techRef = pProfileCommon->getTechnique();
+                        addTechnique_COMMON(techRef, pOgreMat);
+
+                        break;
+                    }
+
+                default:
+                    break;
+                }
+            }
+        }
     }
-  }
-  return 0;
+    return 0;
 }
 
 void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniqueRef techRef, Ogre::MaterialPtr pMat)
@@ -177,24 +179,29 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
       {
         domImage::domInit_fromRef initFromRef = pImg->getInit_from();
 
-        xsAnyURI imageURI = initFromRef->getValue();
+        xsAnyURI imageURI = initFromRef->getValue();    
+
+        std::string uriPath = imageURI.getPath();
+        std::string uriScheme = imageURI.getScheme();
+
+        std::string qualifiedName = convertUriToPath(makeFullUri(uriScheme, uriPath));
+
+
         std::string basename, path;
+        Ogre::StringUtil::splitFilename(qualifiedName, basename, path);
 
-        std::string originalURI(imageURI.getOriginalURI());
-        
-        Ogre::StringUtil::splitFilename(originalURI, basename, path);
 
-        static std::string location = "";
-        if(location != path)
-        {
-            path = convertUriToPath(path);
-            Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
-          
-          location = path;
-        }
+        //static std::string location = "";
+        //if(location != path)
+        //{
+        //    //path = convertUriToPath(path);
+        //    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(path, "FileSystem", "DaeCustom");
+        //  
+        //    location = path;
+        //}
 
-        pOgreTexture = Ogre::TextureManager::getSingleton().load(basename, "DaeCustom", Ogre::TEX_TYPE_2D);
-        pOgreTextureUnitState = pOgrePass->createTextureUnitState(basename, 0);
+        //pOgreTexture = Ogre::TextureManager::getSingleton().load(basename, "DaeCustom", Ogre::TEX_TYPE_2D);
+        //pOgreTextureUnitState = pOgrePass->createTextureUnitState(basename, 0);
       }
 
 

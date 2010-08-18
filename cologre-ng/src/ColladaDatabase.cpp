@@ -1,5 +1,9 @@
 #include "cologre_ng_precompiled.h"
 #include "ColladaDatabase.h"
+
+#include <sstream>
+
+
 #include "ResourceConverter.h"
 #include "GeometryConverter.h"
 #include "MaterialConverter.h"
@@ -8,8 +12,11 @@
 
 CColladaDatabase::CColladaDatabase()
 {
-  m_pDae = NULL;
-  m_pDatabase = NULL;
+    m_pDae = NULL;
+    m_pDatabase = NULL;
+
+    m_pLogger = NULL;
+    m_spLocations = LocationsPtr(new Locations);
 }
 
 CColladaDatabase::~CColladaDatabase()
@@ -23,31 +30,36 @@ CColladaDatabase::~CColladaDatabase()
 
 int CColladaDatabase::load(std::string filename)
 {
-  m_pDae = new DAE();
-  if(m_pDae->load(filename.c_str(), 0))
-  {
-    std::cerr << "DAE object not initialized! Probably .dae file " << filename << " not found." << std::endl;
-    return 1;
-  }
-  m_pDatabase = m_pDae->getDatabase();
-  parseAsset();
-  return 0;
+    m_pLogger = Ogre::LogManager::getSingletonPtr()->createLog("cologre_ng.log");
+
+    m_pDae = new DAE();
+    if(m_pDae->load(filename.c_str(), 0))
+    {
+        std::stringstream s;
+        s << "DAE object not initialized! Probably .dae file " << filename << " not found.";
+        m_pLogger->logMessage(s.str());
+
+        return 1;
+    }
+    m_pDatabase = m_pDae->getDatabase();
+    parseAsset();
+    return 0;
 }
 
 void CColladaDatabase::convertResources()
 {
-  CResourceConverter* pResConv = NULL;
-  pResConv = new CGeometryConverter();
-  pResConv->convert(m_pDatabase);
-  delete pResConv;
+    CResourceConverter* pResConv = NULL;
+    pResConv = new CGeometryConverter();
+    pResConv->convert(m_pDatabase);
+    delete pResConv;
 
-  pResConv = new CMaterialConverter();
-  pResConv->convert(m_pDatabase);
-  delete pResConv;
+    pResConv = new CMaterialConverter(m_pLogger, m_spLocations);
+    pResConv->convert(m_pDatabase);
+    delete pResConv;
 
-  pResConv = new CControllerConverter();
-  pResConv->convert(m_pDatabase);
-  delete pResConv;
+    pResConv = new CControllerConverter();
+    pResConv->convert(m_pDatabase);
+    delete pResConv;
 }
 
 void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager)

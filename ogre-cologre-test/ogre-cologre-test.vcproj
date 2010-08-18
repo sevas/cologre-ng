@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="OgreMain.lib OIS.lib cologre.lib"
+				AdditionalDependencies="OgreMain.lib OIS.lib cologre.lib "
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(OGRE14_HOME)\lib&quot;;&quot;..\cologre-ng\lib&quot;;&quot;..\dependencies\collada-dom-2.2\lib&quot;;..\dependencies\boost\lib\vc9"
 				GenerateDebugInformation="true"

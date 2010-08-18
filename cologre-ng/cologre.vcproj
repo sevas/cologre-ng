@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="-Zm130"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\include;.\utility;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include\1.4&quot;;.\..\dependencies\boost"
+				AdditionalIncludeDirectories=".\include;.\utility;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include\1.4&quot;;.\..\dependencies\boost;&quot;.\..\dependencies\uriparser-0.7.5\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,9 +64,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libcollada14dom21-sd.lib libxml2_a.lib zlib.lib wsock32.lib pcre-d.lib pcrecpp-d.lib minizip-d.lib libboost_filesystem-d.lib libboost_system-d.lib"
+				AdditionalDependencies="libcollada14dom21-sd.lib libxml2_a.lib zlib.lib wsock32.lib pcre-d.lib pcrecpp-d.lib minizip-d.lib libboost_filesystem-d.lib libboost_system-d.lib uriparser_d.lib"
 				OutputFile="$(OutDir)\cologred.lib"
-				AdditionalLibraryDirectories="&quot;.\..\dependencies\collada-dom-2.2\lib&quot;;.\..\dependencies\minizip\win32\lib;.\..\dependencies\pcre\lib\vc9\;.\..\dependencies\tinyxml\lib\vc9\;.\..\dependencies\libxml2\win32\lib;.\..\dependencies\boost\lib\vc9\"
+				AdditionalLibraryDirectories="&quot;.\..\dependencies\collada-dom-2.2\lib&quot;;.\..\dependencies\minizip\win32\lib;.\..\dependencies\pcre\lib\vc9\;.\..\dependencies\tinyxml\lib\vc9\;.\..\dependencies\libxml2\win32\lib;.\..\dependencies\boost\lib\vc9\;&quot;.\..\dependencies\uriparser-0.7.5\win32&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -110,7 +110,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="-Zm130"
-				AdditionalIncludeDirectories=".\include;.\utility;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include\1.4&quot;;.\..\dependencies\boost"
+				AdditionalIncludeDirectories=".\include;.\utility;&quot;$(OGRE14_HOME)\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include&quot;;&quot;.\..\dependencies\collada-dom-2.2\include\1.4&quot;;.\..\dependencies\boost;&quot;.\..\dependencies\uriparser-0.7.5\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;BOOST_ALL_NO_LIB;PCRE_STATIC;DOM_INCLUDE_LIBXML"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
@@ -130,9 +130,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libcollada14dom21-s.lib libxml2_a.lib zlib.lib wsock32.lib pcre.lib pcrecpp.lib minizip.lib libboost_filesystem.lib libboost_system.lib"
+				AdditionalDependencies="libcollada14dom21-s.lib libxml2_a.lib zlib.lib wsock32.lib pcre.lib pcrecpp.lib minizip.lib libboost_filesystem.lib libboost_system.lib uriparser.lib"
 				OutputFile="$(OutDir)\cologre.lib"
-				AdditionalLibraryDirectories="&quot;.\..\dependencies\collada-dom-2.2\lib&quot;;.\..\dependencies\minizip\win32\lib;.\..\dependencies\pcre\lib\vc9\;.\..\dependencies\tinyxml\lib\vc9\;.\..\dependencies\libxml2\win32\lib;.\..\dependencies\boost\lib\vc9\"
+				AdditionalLibraryDirectories="&quot;.\..\dependencies\collada-dom-2.2\lib&quot;;.\..\dependencies\minizip\win32\lib;.\..\dependencies\pcre\lib\vc9\;.\..\dependencies\tinyxml\lib\vc9\;.\..\dependencies\libxml2\win32\lib;.\..\dependencies\boost\lib\vc9\;&quot;.\..\dependencies\uriparser-0.7.5\win32&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -242,6 +242,10 @@
 				</File>
 				<File
 					RelativePath=".\include\cologre_ng_precompiled.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\common.h"
 					>
 				</File>
 				<File
