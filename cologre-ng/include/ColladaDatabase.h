@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-
+namespace cologreng{
 ///Base class to load collada files and convert resources and scenes to Ogre
 /**
   This class serves as the entry point. In fact, if you just want to convert a whole collada scene into Ogre, this
@@ -73,5 +73,7 @@ protected:
     LocationsPtr m_spLocations;
 
 };
+
+}//namespace cologreng
 
 #endif //_COLLADA_DATABASE_H_

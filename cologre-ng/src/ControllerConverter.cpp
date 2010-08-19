@@ -2,8 +2,9 @@
 #include "ControllerConverter.h"
 #include "dom/domController.h"
 
-using namespace Ogre;
+namespace cologreng{
 
+using namespace Ogre;
 
 CControllerConverter::CControllerConverter(void)
 {
@@ -133,3 +134,5 @@ void CControllerConverter::transformVertices(Ogre::MeshPtr pOgreMesh, Ogre::Matr
     }
   }
 }
+
+}// namespace cologreng

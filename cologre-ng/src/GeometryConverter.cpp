@@ -8,6 +8,7 @@
 
 #include "../Utility/Utility.h"
 
+namespace cologreng{
 //------------------------------------------------------------------------------
 CGeometryConverter::CGeometryConverter(Ogre::Log *_log) 
     :CResourceConverter()
@@ -482,3 +483,5 @@ void CGeometryConverter::copyData(domPRef pRef, const std::vector<domSource*> &v
     }
 }
 //------------------------------------------------------------------------------
+
+} // namespace cologreng

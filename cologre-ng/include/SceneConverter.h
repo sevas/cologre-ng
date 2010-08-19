@@ -2,10 +2,11 @@
 #define _SCENE_CONVERTER_H_
 
 #include "Converter.h"
-#include "dae.h"
-#include "dom.h"
-#include "dom/domVisual_scene.h"
-
+#include <dae.h>
+#include <dom.h>
+#include <dom/domVisual_scene.h>
+         
+namespace cologreng{
 ///Class for converting collada scenes into ogre scenegraphs. 
 class CSceneConverter : public CConverter
 {
@@ -63,5 +64,7 @@ protected:
   /// \internal stores whether there is at least one light in the scene, if not, a default light will be added depending on CConverter::m_convOptions
   bool m_hasLight;
 };
+
+} // namespace cologreng
 
 #endif //_SCENE_CONVERTER_H_

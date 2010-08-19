@@ -1,6 +1,8 @@
 #include "cologre_ng_precompiled.h"
 #include "Converter.h"
 
+namespace cologreng{
+
 CConverter::CConverter(void)
 {
 }
@@ -59,3 +61,5 @@ double CConverter::timeStamp()
   return (double)(time.tv_sec-secsFirstCall) + (double)time.tv_usec/(1000.0*1000.0);
 #endif
 }
+
+} // namespace cologreng

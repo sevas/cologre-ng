@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace cologreng{
+
 struct IntermediateVertexData
 {
   unsigned int vertexCount;
@@ -68,5 +70,7 @@ protected:
     Ogre::Log *m_pLog;
 
 };
+
+} //namespace cologreng
 
 #endif //_GEOMETRY_COONVERTER_H_

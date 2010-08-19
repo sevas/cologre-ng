@@ -12,6 +12,7 @@
 #include "ControllerConverter.h"
 #include "SceneConverter.h"
 
+namespace cologreng{
 //------------------------------------------------------------------------------
 const std::string CColladaDatabase::s_LogFilename("cologre_ng.log");
 //------------------------------------------------------------------------------
@@ -107,3 +108,5 @@ void CColladaDatabase::_logMessage(const std::string &_msg)
 #endif
     m_pLog->logMessage(_msg);
 }
+
+} // namespace cologreng

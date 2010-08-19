@@ -4,6 +4,7 @@
 #include "dom/domLight.h"
 #include "dae/domAny.h"
 
+namespace cologreng{
 
 CSceneConverter::CSceneConverter()
 {
@@ -399,3 +400,5 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
   }
   return pOgreLight;
 }
+
+} // namespace cologreng

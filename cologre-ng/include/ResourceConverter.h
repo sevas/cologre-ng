@@ -2,7 +2,9 @@
 #define _RESOURCE_CONVERTER_H_
 
 #include "Converter.h"
-#include "dae.h"
+#include <dae.h>
+
+namespace cologreng{
 
 ///abstract base class for all resource converters
 class CResourceConverter : public CConverter
@@ -20,5 +22,7 @@ protected:
   ///unique names to each created ogre resource, if collada element name is not present
   static unsigned int m_uiElementCounter;
 };
+
+} // namespace cologreng
 
 #endif //_RESOURCE_CONVERTER_H_

@@ -8,7 +8,7 @@
 #include <Ogre.h>
 #include "common.h"
 
-
+namespace cologreng{
 ///Class for converting collada materials into ogre materials.
 /**Class for converting collada materials into ogre materials. Creates Ogre materials for each collada "<material>" and 
   passes for each collada technique. Also loads texture files.
@@ -54,5 +54,7 @@ protected:
     Ogre::Log *m_pLog;
     LocationsPtr m_spLocations;
 };
+
+} // namespace cologreng
 
 #endif //_MATERIAL_CONVERTER_H_

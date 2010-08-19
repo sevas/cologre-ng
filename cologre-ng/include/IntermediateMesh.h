@@ -3,6 +3,8 @@
 
 #include <vector>
 
+namespace cologreng{
+
 struct vertexElementFloat
 {
   std::vector<float> data;
@@ -45,5 +47,7 @@ public:
   std::string m_meshName;
   std::vector<std::string> m_vSubMeshNames;
 };
+
+} // namespace cologreng
 
 #endif //_INTERMEDIATE_MESH_H_

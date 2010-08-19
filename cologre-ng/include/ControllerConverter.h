@@ -3,6 +3,7 @@
 
 #include "ResourceConverter.h"
 
+namespace cologreng{
 ///Parses collada controller libraries.
 /**
   Parses collada controller libraries. Specifically, it takes collada "<skin>s" and applies
@@ -29,5 +30,7 @@ protected:
   ///maybe should be moved to a helper function class or something, but since it is only needed here so far, I'll leave it in here
   void transformVertices(Ogre::MeshPtr pOgreMesh, Ogre::Matrix4* pMatTransform);
 };
+
+} // namespace cologreng
 
 #endif //_CONTROLLER_CONVERTER_H_

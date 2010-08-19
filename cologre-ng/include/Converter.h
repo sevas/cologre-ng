@@ -3,6 +3,7 @@
 
 #include "Ogre.h"
 
+namespace cologreng{
 ///errors which may occur during conversion
 enum conversion_errors
 {
@@ -48,5 +49,7 @@ public:
   ///timer for speed testing
   double timeStamp();
 };
+
+} // namespace cologreng
 
 #endif //_CONVERTER_H_

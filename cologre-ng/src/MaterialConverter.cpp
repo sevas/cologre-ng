@@ -12,6 +12,7 @@
 
 #include "../Utility/Utility.h"
 
+namespace cologreng{
 //-----------------------------------------------------------------------------
 CMaterialConverter::CMaterialConverter(Ogre::Log *_log, LocationsPtr _locations)  
     :CResourceConverter()
@@ -338,3 +339,4 @@ PathBasename CMaterialConverter::_getPathBasenameFromUri(xsAnyURI _uri)
     return PathBasename(path, basename);
 }
 //-----------------------------------------------------------------------------
+} // namespace cologreng

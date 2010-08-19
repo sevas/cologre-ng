@@ -1,6 +1,8 @@
 #include "cologre_ng_precompiled.h"
 #include "ResourceConverter.h"
 
+namespace cologreng{
+
 unsigned int CResourceConverter::m_uiElementCounter = 0;
 
 conversionOptions CConverter::m_convOptions(false, false);
@@ -24,3 +26,5 @@ int CResourceConverter::convert(daeDatabase* pDatabase)
   }
   return 0;
 }
+
+} //namespace cologreng
