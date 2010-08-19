@@ -15,13 +15,9 @@
 namespace cologreng{
 //-----------------------------------------------------------------------------
 CMaterialConverter::CMaterialConverter(Ogre::Log *_log, LocationsPtr _locations)  
-    :CResourceConverter()
+    :CResourceConverter(_log)
     ,m_spLocations(_locations)
-    ,m_pLog(_log)
 {
-#ifdef _DEBUG
-    assert(m_pLog);
-#endif  
     //Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().load("OgreCore.material", "Custom");
 }
 //-----------------------------------------------------------------------------
@@ -31,8 +27,8 @@ CMaterialConverter::~CMaterialConverter(void)
 //-----------------------------------------------------------------------------
 int CMaterialConverter::convert(daeDatabase* pDatabase)
 {
-    _logMessage("Converting materials");
-    _logMessage("-------------------------------------------------");
+    logMessage("Converting materials");
+    logMessage("-------------------------------------------------");
 
 
     unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
@@ -78,7 +74,7 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
         }
     }
 
-    _logMessage("\n\n\n");
+    logMessage("\n\n\n");
 
     return 0;
 }
@@ -156,7 +152,7 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
     else
     {
-        _logMessage(cologreng::utility::toString("Could not resolve to sampler2d for texture ", strTarget));
+        logMessage(cologreng::utility::toString("Could not resolve to sampler2d for texture ", strTarget));
         return;
     }
 
@@ -170,7 +166,7 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
     else
     {
-        _logMessage(cologreng::utility::toString("Could not resolve to surface for sampler2d ", strTarget));
+        logMessage(cologreng::utility::toString("Could not resolve to surface for sampler2d ", strTarget));
         return;
     }
 
@@ -202,15 +198,15 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
 
                 if(m_spLocations->find(pathBasename.first) == m_spLocations->end())
                 {
-                    _logMessage(cologreng::utility::toString("Adding location ", pathBasename.first, " to global resource manager"));
+                    logMessage(cologreng::utility::toString("Adding location ", pathBasename.first, " to global resource manager"));
                     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(pathBasename.first, "FileSystem", "DaeCustom");
                 }
                 else                
                 {
-                    _logMessage(cologreng::utility::toString("Location ", pathBasename.first, " already added to resource manager"));
+                    logMessage(cologreng::utility::toString("Location ", pathBasename.first, " already added to resource manager"));
                 }
                     
-                _logMessage(cologreng::utility::toString("Loading 2D image : ", pathBasename.second));
+                logMessage(cologreng::utility::toString("Loading 2D image : ", pathBasename.second));
 
                 pOgreTexture = Ogre::TextureManager::getSingleton().load(pathBasename.second, "DaeCustom", Ogre::TEX_TYPE_2D);
                 pOgreTextureUnitState = pOgrePass->createTextureUnitState(pathBasename.second, 0);

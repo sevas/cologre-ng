@@ -54,7 +54,7 @@ public:
 
 protected:
     void _initLogger();  
-    void _logMessage(const std::string &_msg);         
+    void logMessage(const std::string &_msg);         
 
 protected:
     /// the dae object

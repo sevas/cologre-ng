@@ -41,12 +41,12 @@ int CColladaDatabase::load(std::string filename)
 
     std::stringstream s;
     s << "Loading DAE file : " << filename;
-    _logMessage(s.str());
+    logMessage(s.str());
 
     m_pDae = new DAE();
     if(m_pDae->load(filename.c_str(), 0))
     {
-        _logMessage(utility::toString("DAE object not initialized! Probably .dae file ", filename,  " not found."));
+        logMessage(utility::toString("DAE object not initialized! Probably .dae file ", filename,  " not found."));
         return 1;
     }
 
@@ -76,7 +76,7 @@ void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager)
   daeElement* pElement = NULL;
   m_pDatabase->getElement(&pElement, 0, NULL, "scene", NULL);
   CSceneConverter* pSceneConv = NULL;
-  pSceneConv = new CSceneConverter();
+  pSceneConv = new CSceneConverter(m_pLog);
   pSceneConv->convert(pElement, pOgreSceneManager);
   delete pSceneConv;
 }
@@ -99,7 +99,7 @@ void CColladaDatabase::_initLogger()
     m_pLog = Ogre::LogManager::getSingletonPtr()->createLog(s_LogFilename);
 }
 //-----------------------------------------------------------------------------
-void CColladaDatabase::_logMessage(const std::string &_msg)
+void CColladaDatabase::logMessage(const std::string &_msg)
 {
 #ifdef _DEBUG
     assert(m_pLog);

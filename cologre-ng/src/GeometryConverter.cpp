@@ -11,12 +11,8 @@
 namespace cologreng{
 //------------------------------------------------------------------------------
 CGeometryConverter::CGeometryConverter(Ogre::Log *_log) 
-    :CResourceConverter()
-    ,m_pLog(_log)
+    :CResourceConverter(_log)
 {
-#ifdef _DEBUG
-    assert(m_pLog);
-#endif  
     m_vertexCount = 0;
     m_dominantElementIndex = 0;
 }
@@ -27,12 +23,12 @@ CGeometryConverter::~CGeometryConverter()
 //------------------------------------------------------------------------------
 int CGeometryConverter::convert(daeDatabase* pDatabase)
 {
-    _logMessage("Converting geometry");
-    _logMessage("-------------------------------------------------") ;
+    logMessage("Converting geometry");
+    logMessage("-------------------------------------------------") ;
 
     unsigned int numElements = pDatabase->getElementCount(NULL, "geometry", NULL);
 
-    _logMessage(cologreng::utility::toString("Loading ", numElements, " meshes"));
+    logMessage(cologreng::utility::toString("Loading ", numElements, " meshes"));
 
     for(unsigned int i = 0; i < numElements; i++)
     {
@@ -56,14 +52,14 @@ int CGeometryConverter::convert(daeDatabase* pDatabase)
             makeOgreMeshFromIntermediateMesh(&IM);
     }
 
-    _logMessage("\n\n\n");
+    logMessage("\n\n\n");
 
     return 0;
 }
 //------------------------------------------------------------------------------
 conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry* pGeo, CIntermediateMesh* pIM)
 {
-    _logMessage(cologreng::utility::toString("Loading mesh : ", pGeo->getName(), " to intermediate mesh"));
+    logMessage(cologreng::utility::toString("Loading mesh : ", pGeo->getName(), " to intermediate mesh"));
 
     domMeshRef colladaMesh = pGeo->getMesh();
 
@@ -72,11 +68,11 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
         domTriangles_Array triArray = (*colladaMesh).getTriangles_array();
         if(triArray.getCount() == 0)
         {
-            _logMessage("No triangles found in mesh, other primitives currently not supported!");
+            logMessage("No triangles found in mesh, other primitives currently not supported!");
             return ERROR_UNSUPPORTED;
         }
 
-        _logMessage(cologreng::utility::toString("Loading ", triArray.getCount(), " triangle(s)"));
+        logMessage(cologreng::utility::toString("Loading ", triArray.getCount(), " triangle(s)"));
         
         for(unsigned int i = 0; i < triArray.getCount(); ++i)
         {
@@ -152,7 +148,7 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
         }
     }
 
-    _logMessage("");
+    logMessage("");
 
     return ALL_OK;
 }

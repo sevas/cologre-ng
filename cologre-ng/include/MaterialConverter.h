@@ -7,6 +7,7 @@
 #include <string>
 #include <Ogre.h>
 #include "common.h"
+#include "HasLog.h"
 
 namespace cologreng{
 ///Class for converting collada materials into ogre materials.
@@ -35,9 +36,6 @@ public:
 
 protected:
     PathBasename _getPathBasenameFromUri(xsAnyURI _uri);
-    void _logMessage(const std::string &_msg) { m_pLog->logMessage(_msg);};
-    
-
 
 protected:
     ///adds COMMON techniques as techniques of the passed Ogre material
@@ -51,7 +49,6 @@ protected:
 
 
 protected:
-    Ogre::Log *m_pLog;
     LocationsPtr m_spLocations;
 };
 

@@ -11,11 +11,8 @@
 namespace cologreng{
 //------------------------------------------------------------------------------
 CControllerConverter::CControllerConverter(Ogre::Log *_log)
-    :m_pLog(_log)
+    :CResourceConverter(_log)
 {
-#ifdef _DEBUG
-    assert(m_pLog);
-#endif
 }
 //------------------------------------------------------------------------------
 CControllerConverter::~CControllerConverter(void)
@@ -35,7 +32,7 @@ int CControllerConverter::convert(daeDatabase* pDatabase)
         Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().getByName(skinRef->getSource().getElement()->getID());
         if(pOgreMesh.isNull())
         {
-            _logMessage(utility::toString("[ERROR] Mesh ", skinRef->getSource().getElement()->getID(), " not found for skinning, skipping..."));
+            logMessage(utility::toString("[ERROR] Mesh ", skinRef->getSource().getElement()->getID(), " not found for skinning, skipping..."));
             return 1;
         }
 

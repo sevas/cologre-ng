@@ -44,8 +44,6 @@ protected:
     */
     void copyData(domPRef pRef, const std::vector<domSource*> &vSource, IntermediateVertexData* pDest, Ogre::VertexDeclaration* pVertexDecl, Ogre::AxisAlignedBox* pAABB);
 
-    void _logMessage(const std::string &_msg){m_pLog->logMessage(_msg);};
-
 
 protected:
     ///for temporarily storing position, normal, txcoord, etc values 
@@ -66,9 +64,6 @@ protected:
     conversion_errors loadGeometryToIntermediateMesh(domGeometry* pGeo, CIntermediateMesh* pIM);
     void addVertexWeights(domSkin* pSkin);
     void makeOgreMeshFromIntermediateMesh(CIntermediateMesh* pIM);
-
-    Ogre::Log *m_pLog;
-
 };
 
 } //namespace cologreng

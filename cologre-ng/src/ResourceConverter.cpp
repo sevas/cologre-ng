@@ -1,30 +1,33 @@
 #include "cologre_ng_precompiled.h"
 #include "ResourceConverter.h"
 
-namespace cologreng{
+#include "../utility/Utility.h"
 
+namespace cologreng{
+//------------------------------------------------------------------------------
 unsigned int CResourceConverter::m_uiElementCounter = 0;
 
 conversionOptions CConverter::m_convOptions(false, false);
 bool CConverter::m_zUp(false);
-
-CResourceConverter::CResourceConverter()
+//------------------------------------------------------------------------------
+CResourceConverter::CResourceConverter(Ogre::Log *_log)
+    :HasLog(_log)
 {
-  m_uiElementCounter++;
+    m_uiElementCounter++;
 }
-
+//------------------------------------------------------------------------------
 CResourceConverter::~CResourceConverter()
 {
 }
-
+//------------------------------------------------------------------------------
 int CResourceConverter::convert(daeDatabase* pDatabase)
 {
   if(!pDatabase)
   {
-    std::cerr << "Element param not valid, aborting!" << std::endl;
+    logMessage(utility::toString("Element param not valid, aborting!"));
     return 1;
   }
   return 0;
 }
-
+//------------------------------------------------------------------------------
 } //namespace cologreng

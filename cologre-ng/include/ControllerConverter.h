@@ -33,10 +33,6 @@ protected:
   ///maybe should be moved to a helper function class or something, but since it is only needed here so far, I'll leave it in here
   void transformVertices(Ogre::MeshPtr pOgreMesh, Ogre::Matrix4* pMatTransform);
 
-  void _logMessage(const std::string &_msg){m_pLog->logMessage(_msg);};
-
-protected:
-    Ogre::Log *m_pLog;
 };
 
 } // namespace cologreng

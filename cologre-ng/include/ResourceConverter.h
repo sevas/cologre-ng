@@ -4,14 +4,17 @@
 #include "Converter.h"
 #include <dae.h>
 
+#include <Ogre.h>
+#include "HasLog.h"
+
 namespace cologreng{
 
 ///abstract base class for all resource converters
-class CResourceConverter : public CConverter
+class CResourceConverter : public CConverter, protected HasLog
 {
 public:
   ///Constructor
-  CResourceConverter() ;
+  CResourceConverter(Ogre::Log*_log) ;
   ///Destructor
   virtual ~CResourceConverter();
   ///virtual function, has to be implemented by all derived classes

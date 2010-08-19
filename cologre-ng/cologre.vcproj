@@ -199,6 +199,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\HasLog.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\IntermediateMesh.cpp"
 					>
 				</File>
@@ -258,6 +262,10 @@
 				</File>
 				<File
 					RelativePath=".\include\GeometryConverter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\include\HasLog.h"
 					>
 				</File>
 				<File

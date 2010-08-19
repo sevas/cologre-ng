@@ -5,14 +5,17 @@
 #include <dae.h>
 #include <dom.h>
 #include <dom/domVisual_scene.h>
-         
+
+#include <Ogre.h>
+#include "HasLog.h"
+
 namespace cologreng{
 ///Class for converting collada scenes into ogre scenegraphs. 
-class CSceneConverter : public CConverter
+class CSceneConverter : public CConverter, protected HasLog
 {
 public:
   ///Constructor
-  CSceneConverter(void);
+  CSceneConverter(Ogre::Log *_log);
   ///Destructor
   virtual ~CSceneConverter(void);
 
