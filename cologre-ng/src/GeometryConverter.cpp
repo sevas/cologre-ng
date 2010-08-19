@@ -5,7 +5,8 @@
 #ifdef _DEBUG
 #include <cassert>
 #endif
-#include <sstream>
+
+#include "../Utility/Utility.h"
 
 //------------------------------------------------------------------------------
 CGeometryConverter::CGeometryConverter(Ogre::Log *_log) 
@@ -25,16 +26,12 @@ CGeometryConverter::~CGeometryConverter()
 //------------------------------------------------------------------------------
 int CGeometryConverter::convert(daeDatabase* pDatabase)
 {
-    m_pLog->logMessage("Converting geometry");
-    m_pLog->logMessage("-------------------------------------------------") ;
+    _logMessage("Converting geometry");
+    _logMessage("-------------------------------------------------") ;
 
     unsigned int numElements = pDatabase->getElementCount(NULL, "geometry", NULL);
 
-    {
-        std::stringstream s;
-        s << "Loading " << numElements << " meshes";
-        m_pLog->logMessage(s.str());
-    }
+    _logMessage(cologreng::utility::toString("Loading ", numElements, " meshes"));
 
     for(unsigned int i = 0; i < numElements; i++)
     {
@@ -58,18 +55,15 @@ int CGeometryConverter::convert(daeDatabase* pDatabase)
             makeOgreMeshFromIntermediateMesh(&IM);
     }
 
-    m_pLog->logMessage("\n\n\n");
+    _logMessage("\n\n\n");
 
     return 0;
 }
 //------------------------------------------------------------------------------
 conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry* pGeo, CIntermediateMesh* pIM)
 {
-    {
-        std::stringstream s;
-        s << "Loading mesh : " << pGeo->getName() << " to intermediate mesh";
-        m_pLog->logMessage(s.str());
-    }
+    _logMessage(cologreng::utility::toString("Loading mesh : ", pGeo->getName(), " to intermediate mesh"));
+
     domMeshRef colladaMesh = pGeo->getMesh();
 
     if(colladaMesh)
@@ -77,16 +71,12 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
         domTriangles_Array triArray = (*colladaMesh).getTriangles_array();
         if(triArray.getCount() == 0)
         {
-            m_pLog->logMessage("No triangles found in mesh, other primitives currently not supported!");
+            _logMessage("No triangles found in mesh, other primitives currently not supported!");
             return ERROR_UNSUPPORTED;
         }
 
-        {
-            std::stringstream s;
-            s << "Loading " << triArray.getCount() << " triangle(s) ";
-            m_pLog->logMessage(s.str());
-        }
-
+        _logMessage(cologreng::utility::toString("Loading ", triArray.getCount(), " triangle(s)"));
+        
         for(unsigned int i = 0; i < triArray.getCount(); ++i)
         {
             pIM->m_subMeshCount++;
@@ -161,7 +151,7 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
         }
     }
 
-    m_pLog->logMessage("");
+    _logMessage("");
 
     return ALL_OK;
 }
@@ -200,14 +190,13 @@ void CGeometryConverter::addVertexWeights(domSkin *pSkin)
 //------------------------------------------------------------------------------
 void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM)
 {
-    {
-        std::stringstream s;
-        s << "Making Ogre mesh from intermediate mesh : " << pIM->m_meshName;
-        s << " [#submeshes:" << pIM->m_subMeshCount << "   #vertices:" << pIM->m_positions.data.size();
-        s << "   #normals:" << pIM->m_normals.data.size() << "]";
-        m_pLog->logMessage(s.str());
-    }
-
+    cologreng::utility::toString("Making Ogre mesh from intermediate mesh : "
+                                , pIM->m_meshName
+                                , " [#submeshes : " , pIM->m_subMeshCount
+                                , " #vertices : " , pIM->m_positions.data.size()
+                                , " #normals : " , pIM->m_normals.data.size()
+                                ,  "]");
+    
     Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().createManual(pIM->m_meshName, "DaeCustom");
     pOgreMesh->sharedVertexData = new Ogre::VertexData();
     Ogre::VertexDeclaration* pDecl = pOgreMesh->sharedVertexData->vertexDeclaration;
@@ -401,11 +390,8 @@ void CGeometryConverter::buildVertexDeclFromInputArray(const daeElementRef elemR
 
                 else
                 {
-                    {
-                    
-                    }
-
-                    std::cerr << "Unknown semantic " << strSem << std::endl;
+                    // TODO : should probabl throw an exception
+                    cologreng::utility::toString("[ERROR]", "Unknown semantic ", strSem);
                     return;
                 }
 

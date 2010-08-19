@@ -5,6 +5,8 @@
 #include "IntermediateMesh.h"
 #include "dom/domGeometry.h"
 
+#include <string>
+
 struct IntermediateVertexData
 {
   unsigned int vertexCount;
@@ -40,6 +42,10 @@ protected:
     */
     void copyData(domPRef pRef, const std::vector<domSource*> &vSource, IntermediateVertexData* pDest, Ogre::VertexDeclaration* pVertexDecl, Ogre::AxisAlignedBox* pAABB);
 
+    void _logMessage(const std::string &_msg){m_pLog->logMessage(_msg);};
+
+
+protected:
     ///for temporarily storing position, normal, txcoord, etc values 
     std::vector<float> m_vDataTmp;
     ///for temporarily storing offsets in the m_vDataTmp vector 

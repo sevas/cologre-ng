@@ -10,7 +10,7 @@
 #include <dom/domEffect.h>
 #include <dom/domMaterial.h>     
 
-#include "Utility.h"
+#include "../Utility/Utility.h"
 
 //-----------------------------------------------------------------------------
 CMaterialConverter::CMaterialConverter(Ogre::Log *_log, LocationsPtr _locations)  
@@ -341,8 +341,8 @@ PathBasename CMaterialConverter::_getPathBasenameFromUri(xsAnyURI _uri)
     std::string uriPath = _uri.getPath();
     std::string uriScheme = _uri.getScheme();
 
-    std::string qualifiedName = convertUriToPath(makeFullUri(uriScheme, uriPath));
-
+    std::string fullURI = cologreng::utility::makeFullUri(uriScheme, uriPath); 
+    std::string qualifiedName = cologreng::utility::convertUriToPath(fullURI);
 
     std::string basename, path;
     Ogre::StringUtil::splitFilename(qualifiedName, basename, path);

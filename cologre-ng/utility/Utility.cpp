@@ -7,6 +7,8 @@
 
 #include <uriparser/Uri.h>
 
+namespace cologreng{
+namespace utility{
 
 //-----------------------------------------------------------------------------
 std::string makeFullUri(const std::string &_scheme, const std::string &_path)
@@ -31,4 +33,5 @@ std::string convertUriToPath(const std::string &_uri)
 
     return s;
 }
-
+//-----------------------------------------------------------------------------
+}}
