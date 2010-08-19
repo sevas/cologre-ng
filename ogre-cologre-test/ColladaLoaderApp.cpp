@@ -10,21 +10,20 @@ void ColladaLoaderApp::createScene()
 {
     createGrid(500);
 
-    CColladaDatabase db;
-    int ret = 0;
 
     //
     //if(ret = db.load("../../../media/indochine.DAE"))
     //exit(-1);
     //ret = db.load("../../media/indochine_tris.DAE");
 
-    ret = db.load("../../media/cube.dae");
+    int ret = 0;
+    ret = mColladaDatabase.load("../../media/cube.dae");
     assert(ret == 0);              
 
-    db.convertResources();
+    mColladaDatabase.convertResources();
     _dumpResourceList();
 
-    db.convertScene(mSceneMgr);
+    mColladaDatabase.convertScene(mSceneMgr);
 
 }
 //-----------------------------------------------------------------------------

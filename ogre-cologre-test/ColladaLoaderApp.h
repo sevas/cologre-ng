@@ -25,6 +25,6 @@ protected:
     void _dumpSharedData(Ogre::Log *_log, Ogre::MeshPtr);
 
 protected:
-    CColladaDatabase db;
+    cologreng::CColladaDatabase mColladaDatabase;
 };
 #endif 
