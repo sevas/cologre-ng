@@ -184,7 +184,6 @@ protected:
         Light *light = mSceneMgr->createLight("light");
         //light->setPosition(0, 300, 0);
         mcameraNode->attachObject(light);
-
     }
     virtual void createFrameListener(void)
     {

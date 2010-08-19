@@ -9,8 +9,6 @@
 #include "cologre.h"           
 
 
-
-
 class ColladaLoaderApp : public ExampleApplication
 {
 public:

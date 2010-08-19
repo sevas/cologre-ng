@@ -23,7 +23,7 @@ CColladaDatabase::CColladaDatabase()
     m_pLog = NULL;
     m_spLocations = LocationsPtr(new Locations);
 }
-
+//------------------------------------------------------------------------------
 CColladaDatabase::~CColladaDatabase()
 {
     if(m_pDae)
@@ -32,7 +32,7 @@ CColladaDatabase::~CColladaDatabase()
         m_pDae = NULL;
     }
 }
-
+//------------------------------------------------------------------------------
 int CColladaDatabase::load(std::string filename)
 {
     _initLogger();
@@ -55,11 +55,11 @@ int CColladaDatabase::load(std::string filename)
     parseAsset();
     return 0;
 }
-
+//------------------------------------------------------------------------------
 void CColladaDatabase::convertResources()
 {
     CResourceConverter* pResConv = NULL;
-    pResConv = new CGeometryConverter();
+    pResConv = new CGeometryConverter(m_pLog);
     pResConv->convert(m_pDatabase);
     delete pResConv;
 
@@ -71,7 +71,7 @@ void CColladaDatabase::convertResources()
     pResConv->convert(m_pDatabase);
     delete pResConv;
 }
-
+//------------------------------------------------------------------------------
 void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager)
 {
   daeElement* pElement = NULL;
@@ -81,7 +81,7 @@ void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager)
   pSceneConv->convert(pElement, pOgreSceneManager);
   delete pSceneConv;
 }
-
+//------------------------------------------------------------------------------
 void CColladaDatabase::parseAsset()
 {
   daeElement* pElement = NULL;

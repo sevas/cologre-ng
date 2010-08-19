@@ -30,6 +30,10 @@ CMaterialConverter::~CMaterialConverter(void)
 //-----------------------------------------------------------------------------
 int CMaterialConverter::convert(daeDatabase* pDatabase)
 {
+    m_pLog->logMessage("Converting materials");
+    m_pLog->logMessage("-------------------------------------------------");
+
+
     unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
     for(unsigned int i = 0; i < numElements; i++)
     {
@@ -72,6 +76,9 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
             }
         }
     }
+
+    m_pLog->logMessage("\n\n\n");
+
     return 0;
 }
 //-----------------------------------------------------------------------------
@@ -199,7 +206,7 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
                 if(m_spLocations->find(pathBasename.first) == m_spLocations->end())
                 {
                     std::stringstream s;
-                    s << "Adding location " << pathBasename.first << " resource manager";
+                    s << "Adding location " << pathBasename.first << " to global resource manager";
                     m_pLog->logMessage(s.str());
 
                     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(pathBasename.first, "FileSystem", "DaeCustom");

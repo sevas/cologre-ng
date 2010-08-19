@@ -16,9 +16,10 @@ void ColladaLoaderApp::createScene()
     //
     //if(ret = db.load("../../../media/indochine.DAE"))
     //exit(-1);
-    ret = db.load("../../media/indochine.DAE");
-    //ret = db.load("../../media/cube.dae");
-    //assert(ret != 0);              
+    //ret = db.load("../../media/indochine_tris.DAE");
+
+    ret = db.load("../../media/cube.dae");
+    assert(ret == 0);              
 
     db.convertResources();
     _dumpResourceList();

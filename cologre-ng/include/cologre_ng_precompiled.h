@@ -8,7 +8,10 @@
 #include <vector>
 #include <numeric>
 #include <sstream>
+#ifdef _DEBUG
 #include <cassert>
+#endif
+
 
 #include <Ogre.h>
 
