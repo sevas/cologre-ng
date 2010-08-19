@@ -1,7 +1,10 @@
 #ifndef _CONTROLLER_CONVERTER_H_
 #define _CONTROLLER_CONVERTER_H_ 
 
+#include <string>
+#include <Ogre.h>
 #include "ResourceConverter.h"
+
 
 namespace cologreng{
 ///Parses collada controller libraries.
@@ -13,7 +16,7 @@ namespace cologreng{
 class CControllerConverter : public CResourceConverter
 {
 public:
-  CControllerConverter(void);
+  CControllerConverter(Ogre::Log *log);
   virtual ~CControllerConverter(void);
 
   /**Reads collada "<skin>s" and applies vertex weights to ogre meshes. It also transforms all vertices of a mesh according 
@@ -29,6 +32,11 @@ protected:
   ///transforms the individual vertices of the mesh rather than applying a scene node transformation
   ///maybe should be moved to a helper function class or something, but since it is only needed here so far, I'll leave it in here
   void transformVertices(Ogre::MeshPtr pOgreMesh, Ogre::Matrix4* pMatTransform);
+
+  void _logMessage(const std::string &_msg){m_pLog->logMessage(_msg);};
+
+protected:
+    Ogre::Log *m_pLog;
 };
 
 } // namespace cologreng

@@ -11,6 +11,7 @@
 #include "MaterialConverter.h"
 #include "ControllerConverter.h"
 #include "SceneConverter.h"
+#include "../utility/Utility.h"
 
 namespace cologreng{
 //------------------------------------------------------------------------------
@@ -45,10 +46,7 @@ int CColladaDatabase::load(std::string filename)
     m_pDae = new DAE();
     if(m_pDae->load(filename.c_str(), 0))
     {
-        std::stringstream s;
-        s << "DAE object not initialized! Probably .dae file " << filename << " not found.";
-        _logMessage(s.str());
-
+        _logMessage(utility::toString("DAE object not initialized! Probably .dae file ", filename,  " not found."));
         return 1;
     }
 
@@ -68,7 +66,7 @@ void CColladaDatabase::convertResources()
     pResConv->convert(m_pDatabase);
     delete pResConv;
 
-    pResConv = new CControllerConverter();
+    pResConv = new CControllerConverter(m_pLog);
     pResConv->convert(m_pDatabase);
     delete pResConv;
 }

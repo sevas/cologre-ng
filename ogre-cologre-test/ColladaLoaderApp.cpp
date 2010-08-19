@@ -35,16 +35,15 @@ void ColladaLoaderApp::_dumpResourceList()
 {
     Ogre::Log *log = Ogre::LogManager::getSingletonPtr()->createLog("resources.log");
 
-    log->logMessage("--------------- MATERIALS");
+
     _dumpMaterialList(log);
-    log->logMessage("--------------- TEXTURES");
     _dumpTextureList(log);
-    log->logMessage("--------------- MODELS");
     _dumpMeshList(log);
 }
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::_dumpMaterialList(Ogre::Log *_log)
 {
+    _log->logMessage("--------------- MATERIALS");
     Ogre::MaterialManager *allMaterials = Ogre::MaterialManager::getSingletonPtr();
     Ogre::MaterialManager::ResourceMapIterator it = allMaterials->getResourceIterator();
 
@@ -62,6 +61,7 @@ void ColladaLoaderApp::_dumpMaterialList(Ogre::Log *_log)
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::_dumpTextureList(Ogre::Log *_log)
 {
+    _log->logMessage("--------------- TEXTURES");
     Ogre::TextureManager *allTextures = Ogre::TextureManager::getSingletonPtr();
     Ogre::TextureManager::ResourceMapIterator it = allTextures->getResourceIterator();
 
@@ -85,6 +85,7 @@ void ColladaLoaderApp::_dumpTextureList(Ogre::Log *_log)
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::_dumpMeshList(Ogre::Log* _log)
 {
+    _log->logMessage("--------------- MODELS");
     Ogre::MeshManager *allMeshes = Ogre::MeshManager::getSingletonPtr();
     Ogre::MeshManager::ResourceMapIterator it = allMeshes->getResourceIterator();
 
