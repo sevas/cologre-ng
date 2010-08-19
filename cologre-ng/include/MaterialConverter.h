@@ -4,6 +4,7 @@
 #include "ResourceConverter.h"
 #include <dom/domProfile_COMMON.h>
 
+#include <string>
 #include <Ogre.h>
 #include "common.h"
 
@@ -34,7 +35,8 @@ public:
 
 protected:
     PathBasename _getPathBasenameFromUri(xsAnyURI _uri);
-
+    void _logMessage(const std::string &_msg) { m_pLog->logMessage(_msg);};
+    
 
 
 protected:

@@ -30,8 +30,8 @@ CMaterialConverter::~CMaterialConverter(void)
 //-----------------------------------------------------------------------------
 int CMaterialConverter::convert(daeDatabase* pDatabase)
 {
-    m_pLog->logMessage("Converting materials");
-    m_pLog->logMessage("-------------------------------------------------");
+    _logMessage("Converting materials");
+    _logMessage("-------------------------------------------------");
 
 
     unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
@@ -77,7 +77,7 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
         }
     }
 
-    m_pLog->logMessage("\n\n\n");
+    _logMessage("\n\n\n");
 
     return 0;
 }
@@ -155,9 +155,7 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
     else
     {
-        std::stringstream s;
-        s << "Could not resolve to sampler2d for texture " << strTarget;
-        m_pLog->logMessage(s.str());
+        _logMessage(cologreng::utility::toString("Could not resolve to sampler2d for texture ", strTarget));
         return;
     }
 
@@ -171,9 +169,7 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
     else
     {
-        std::stringstream s;
-        s << "Could not resolve to surface for sampler2d " << strTarget ;
-        m_pLog->logMessage(s.str());
+        _logMessage(cologreng::utility::toString("Could not resolve to surface for sampler2d ", strTarget));
         return;
     }
 
@@ -205,23 +201,15 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
 
                 if(m_spLocations->find(pathBasename.first) == m_spLocations->end())
                 {
-                    std::stringstream s;
-                    s << "Adding location " << pathBasename.first << " to global resource manager";
-                    m_pLog->logMessage(s.str());
-
+                    _logMessage(cologreng::utility::toString("Adding location ", pathBasename.first, " to global resource manager"));
                     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(pathBasename.first, "FileSystem", "DaeCustom");
                 }
                 else                
                 {
-                    std::stringstream s;
-                    s << "Location " << pathBasename.first << " already added to resource manager";
-                    m_pLog->logMessage(s.str());
+                    _logMessage(cologreng::utility::toString("Location ", pathBasename.first, " already added to resource manager"));
                 }
-
-                std::stringstream s;
-                s << "Loading 2D image : " << pathBasename.second;
-                m_pLog->logMessage(s.str());
-
+                    
+                _logMessage(cologreng::utility::toString("Loading 2D image : ", pathBasename.second));
 
                 pOgreTexture = Ogre::TextureManager::getSingleton().load(pathBasename.second, "DaeCustom", Ogre::TEX_TYPE_2D);
                 pOgreTextureUnitState = pOgrePass->createTextureUnitState(pathBasename.second, 0);
