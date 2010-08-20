@@ -108,16 +108,12 @@ void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniq
 //-----------------------------------------------------------------------------
 void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_complexType::domTextureRef textureRef, Ogre::Pass* pOgrePass)
 {
-    daeElementRef elemRef;
-    domFx_sampler2D_commonRef sampler2dRef;
-    domFx_surface_commonRef surfaceRef;
-
     xsNCName texName = textureRef->getTexture();
     std::string strTarget = texName;
     strTarget = "./" + strTarget;
     daeSIDResolver res(textureRef->getDocument()->getDomRoot(), strTarget.c_str(), NULL);
-    elemRef = res.getElement();
 
+    daeElementRef elemRef = res.getElement();
     domCommon_newparam_type* pNewparam = NULL;
     if(elemRef)
         pNewparam = daeSafeCast<domCommon_newparam_type>(&(*elemRef));
@@ -127,7 +123,8 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         return;
     }
 
-    sampler2dRef = pNewparam->getSampler2D();
+    // get the sampler2d element                        
+    domFx_sampler2D_commonRef  sampler2dRef = pNewparam->getSampler2D();
     strTarget = sampler2dRef->getSource()->getValue();
     strTarget = "./" + strTarget;
     res.setTarget(strTarget.c_str());
@@ -141,20 +138,12 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         return;
     }
 
-    surfaceRef = pNewparam->getSurface();
+    // get the surface referenced in the sampler 
+    domFx_surface_commonRef surfaceRef = pNewparam->getSurface();
     switch(surfaceRef->getType())
     {
-    case FX_SURFACE_TYPE_ENUM_1D:
-        break;
-    case FX_SURFACE_TYPE_ENUM_2D:        
-        _add2DTexturePass(surfaceRef, sampler2dRef, pOgrePass);        
-        break;
-    case FX_SURFACE_TYPE_ENUM_3D:
-        break;
-    case FX_SURFACE_TYPE_ENUM_CUBE:
-        break;
-    default:
-        break;
+    case FX_SURFACE_TYPE_ENUM_2D: _add2DTexturePass(surfaceRef, sampler2dRef, pOgrePass);  break;
+    default: logMessage(utility::toString("Unknown surface type id was detected : ", surfaceRef->getType())); break;
     }
 }
 //-----------------------------------------------------------------------------
@@ -235,7 +224,23 @@ void CMaterialConverter::setSamplerAttributes(const domFx_sampler2D_commonRef sa
     }
     pTextureUnitState->setTextureFiltering(foMinFilter, foMagFilter, foMipFilter);
 
-    //for later : maybe support texture wrapping modes, for now just leave it at the ogre default
+
+    // set wrapping mode
+    domFx_sampler2D_common_complexType::domWrap_sRef sRef = sampler2dRef->getWrap_s();
+    domFx_sampler2D_common_complexType::domWrap_tRef tRef = sampler2dRef->getWrap_t();                               
+    Ogre::TextureUnitState::TextureAddressingMode uTAM, vTAM, wTAM;
+    uTAM = Ogre::TextureUnitState::TAM_WRAP; // default
+    vTAM = Ogre::TextureUnitState::TAM_WRAP; // default
+    wTAM = Ogre::TextureUnitState::TAM_WRAP; // default
+
+    if(sRef->getValue())
+        uTAM = _convertDomWrappingToOgreTextureAddressingMode(sRef->getValue());
+    if(tRef->getValue())
+        vTAM = _convertDomWrappingToOgreTextureAddressingMode(tRef->getValue());
+
+    wTAM = Ogre::TextureUnitState::TAM_WRAP; // default
+
+    pTextureUnitState->setTextureAddressingMode(uTAM, vTAM, wTAM);
 }
 //-----------------------------------------------------------------------------
 PathBasename CMaterialConverter::_getPathBasenameFromUri(xsAnyURI _uri)
@@ -384,6 +389,19 @@ void CMaterialConverter::_addResourcesLocation( const std::string &_path )
     else                
     {
         logMessage(cologreng::utility::toString("Location ", _path, " already added to resource manager"));
+    }
+}
+//-----------------------------------------------------------------------------
+Ogre::TextureUnitState::TextureAddressingMode CMaterialConverter::_convertDomWrappingToOgreTextureAddressingMode(domFx_sampler_wrap_common _wrapValue)
+{
+    switch(_wrapValue)
+    {
+    case FX_SAMPLER_WRAP_COMMON_NONE: return Ogre::TextureUnitState::TAM_WRAP; // default ogre value
+    case FX_SAMPLER_WRAP_COMMON_WRAP: return Ogre::TextureUnitState::TAM_WRAP;
+    case FX_SAMPLER_WRAP_COMMON_MIRROR: return Ogre::TextureUnitState::TAM_MIRROR;
+    case FX_SAMPLER_WRAP_COMMON_CLAMP: return Ogre::TextureUnitState::TAM_CLAMP;
+    case FX_SAMPLER_WRAP_COMMON_BORDER: return Ogre::TextureUnitState::TAM_BORDER;        
+    default: return Ogre::TextureUnitState::TAM_WRAP;  // default
     }
 }
 //-----------------------------------------------------------------------------

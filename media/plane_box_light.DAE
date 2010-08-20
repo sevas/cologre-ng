@@ -121,8 +121,8 @@
         <newparam sid="testRotation_png-sampler">
           <sampler2D>
             <source>testRotation_png-surface</source>
-            <wrap_s>WRAP</wrap_s>
-            <wrap_t>WRAP</wrap_t>
+            <wrap_s>MIRROR</wrap_s>
+            <wrap_t>MIRROR</wrap_t>
             <minfilter>NONE</minfilter>
             <magfilter>NONE</magfilter>
             <mipfilter>NONE</mipfilter>

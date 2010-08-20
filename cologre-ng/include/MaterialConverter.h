@@ -52,6 +52,7 @@ protected:
     void _addBlinnPass( domProfile_COMMON::domTechnique::domBlinnRef blinnRef, Ogre::Pass* pOgrePass );
     void _add2DTexturePass( domFx_surface_commonRef surfaceRef, domFx_sampler2D_commonRef _sampler2dRef,  Ogre::Pass* pOgrePass );
     void _addResourcesLocation(const std::string &_path);
+    Ogre::TextureUnitState::TextureAddressingMode _convertDomWrappingToOgreTextureAddressingMode(domFx_sampler_wrap_common _wrapValue);
 
 
 protected:
