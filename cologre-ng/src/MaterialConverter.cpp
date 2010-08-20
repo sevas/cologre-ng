@@ -30,7 +30,6 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
     logMessage("Converting materials");
     logMessage("-------------------------------------------------");
 
-
     unsigned int numElements = pDatabase->getElementCount(NULL, "material", NULL);
     for(unsigned int i = 0; i < numElements; i++)
     {
@@ -38,12 +37,15 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
         pDatabase->getElement(&pElement, i, NULL, "material", NULL);
         domMaterial* pMat = (domMaterial*)pElement;
         xsID id = pMat->getId();
+        std::string materialName;
+
         if(!id)
         {
-            std::stringstream strTmp;
-            strTmp << "Material_" << m_uiElementCounter << std::endl;
-            id = strTmp.str().c_str();
+            materialName = _makeGenericMaterialName(m_uiElementCounter);
+            id = materialName.c_str();
         }
+
+        logMessage(utility::toString("Creating ogre material : ", id, " in group DaeCustom"));
 
         Ogre::MaterialPtr pOgreMat = Ogre::MaterialManager::getSingleton().create(id, "DaeCustom");
         pOgreMat->removeAllTechniques();
@@ -81,55 +83,27 @@ int CMaterialConverter::convert(daeDatabase* pDatabase)
 //-----------------------------------------------------------------------------
 void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniqueRef techRef, Ogre::MaterialPtr pMat)
 {
-  Ogre::Technique* pOgreTech = pMat->createTechnique();
-  pOgreTech->setName(techRef->getSid());
-  pOgreTech->removeAllPasses();
-  Ogre::Pass* pOgrePass = pOgreTech->createPass();
+    logMessage(utility::toString("Material ", pMat->getName(), " : adding technique COMMON"));
 
-  domProfile_COMMON::domTechnique::domPhongRef phongRef = techRef->getPhong();
-  if(phongRef)
-  {
-    domCommon_color_or_texture_typeRef typeRef;
-    domCommon_color_or_texture_type::domColorRef colorRef;
-    domCommon_color_or_texture_type::domTextureRef textureRef;
+    Ogre::Technique* pOgreTech = pMat->createTechnique();
+    pOgreTech->setName(techRef->getSid());
+    pOgreTech->removeAllPasses();
+    Ogre::Pass* pOgrePass = pOgreTech->createPass();
 
-    typeRef = phongRef->getAmbient();
-    colorRef = typeRef->getColor();
-    pOgrePass->setAmbient(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2]);
+    logMessage(utility::toString("Material ", pMat->getName(), " : adding pass"));
 
-    typeRef = phongRef->getDiffuse();
-    if(colorRef = typeRef->getColor())
-      pOgrePass->setDiffuse(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2], colorRef->getValue()[3]);
-    else if(textureRef = typeRef->getTexture())
-      convertTexture(textureRef, pOgrePass);
+    domProfile_COMMON::domTechnique::domPhongRef phongRef = techRef->getPhong();
+    if(phongRef)
+    {
+        _addPhongPass(phongRef, pOgrePass);
+    }
 
-    typeRef = phongRef->getSpecular();
-    colorRef = typeRef->getColor();
-    pOgrePass->setSpecular(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2],  colorRef->getValue()[3]);
-      
-  }
-
-  domProfile_COMMON::domTechnique::domBlinnRef blinnRef = techRef->getBlinn();
-  if(blinnRef)
-  {
-    domCommon_color_or_texture_typeRef typeRef;
-    domCommon_color_or_texture_type::domColorRef colorRef;
-    domCommon_color_or_texture_type::domTextureRef textureRef;
-
-    typeRef = blinnRef->getAmbient();
-    colorRef = typeRef->getColor();
-    pOgrePass->setAmbient(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2]);
-
-    typeRef = blinnRef->getDiffuse();
-    if(colorRef = typeRef->getColor())
-      pOgrePass->setDiffuse(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2], colorRef->getValue()[3]);
-    else if(textureRef = typeRef->getTexture())
-      convertTexture(textureRef, pOgrePass);
-
-    typeRef = blinnRef->getSpecular();
-    colorRef = typeRef->getColor();
-    pOgrePass->setSpecular(colorRef->getValue()[0], colorRef->getValue()[1], colorRef->getValue()[2],  colorRef->getValue()[3]);
-  }
+    // TODO : should be ifelse ?
+    domProfile_COMMON::domTechnique::domBlinnRef blinnRef = techRef->getBlinn();
+    if(blinnRef)
+    {
+        _addBlinnPass(blinnRef, pOgrePass);
+    }
 }
 //-----------------------------------------------------------------------------
 void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_complexType::domTextureRef textureRef, Ogre::Pass* pOgrePass)
@@ -137,9 +111,6 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
     daeElementRef elemRef;
     domFx_sampler2D_commonRef sampler2dRef;
     domFx_surface_commonRef surfaceRef;
-    domImage* pImg = NULL;
-    Ogre::TexturePtr pOgreTexture;
-    Ogre::TextureUnitState* pOgreTextureUnitState = NULL;
 
     xsNCName texName = textureRef->getTexture();
     std::string strTarget = texName;
@@ -173,52 +144,209 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
     surfaceRef = pNewparam->getSurface();
     switch(surfaceRef->getType())
     {
-    case FX_SURFACE_TYPE_ENUM_2D:
-        {
-
-            // get image handle
-            daeElement *initFrom = surfaceRef->getChild("init_from");
-                           
-            std::string imageFile;
-            initFrom->getCharData(imageFile);
-        
-            // find image in library
-            daeDocument *doc = initFrom->getDocument();
-            daeDatabase *db = initFrom->getDAE()->getDatabase();
-
-            pImg = daeSafeCast<domImage>(db->idLookup(imageFile, doc));
-
-                                            
-            if(pImg)
-            {
-                domImage::domInit_fromRef initFromRef = pImg->getInit_from();
-
-                xsAnyURI imageURI = initFromRef->getValue();    
-                PathBasename pathBasename = _getPathBasenameFromUri(imageURI);
-
-                if(m_spLocations->find(pathBasename.first) == m_spLocations->end())
-                {
-                    logMessage(cologreng::utility::toString("Adding location ", pathBasename.first, " to global resource manager"));
-                    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(pathBasename.first, "FileSystem", "DaeCustom");
-                }
-                else                
-                {
-                    logMessage(cologreng::utility::toString("Location ", pathBasename.first, " already added to resource manager"));
-                }
-                    
-                logMessage(cologreng::utility::toString("Loading 2D image : ", pathBasename.second));
-
-                pOgreTexture = Ogre::TextureManager::getSingleton().load(pathBasename.second, "DaeCustom", Ogre::TEX_TYPE_2D);
-                pOgreTextureUnitState = pOgrePass->createTextureUnitState(pathBasename.second, 0);
-            }
-            break;
-        }
+    case FX_SURFACE_TYPE_ENUM_1D:
+        break;
+    case FX_SURFACE_TYPE_ENUM_2D:        
+        _add2DTexturePass(surfaceRef, sampler2dRef, pOgrePass);        
+        break;
+    case FX_SURFACE_TYPE_ENUM_3D:
+        break;
+    case FX_SURFACE_TYPE_ENUM_CUBE:
+        break;
     default:
         break;
     }
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::setImageFormat(const xsToken colladaFormat, Ogre::TexturePtr pOgreTexture)
+{
+    if(colladaFormat == "A8R8G8B8")
+        pOgreTexture->setFormat(Ogre::PF_A8R8G8B8);
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::setSamplerAttributes(const domFx_sampler2D_commonRef sampler2dRef, Ogre::TextureUnitState *pTextureUnitState)
+{
+    Ogre::FilterOptions foMinFilter = Ogre::FO_ANISOTROPIC;
+    Ogre::FilterOptions foMagFilter = Ogre::FO_ANISOTROPIC;
+    Ogre::FilterOptions foMipFilter = Ogre::FO_LINEAR;
 
-    if(!(pOgreTexture.isNull()))
+    if(domFx_sampler2D_common_complexType::domMinfilterRef minFilerRef = sampler2dRef->getMinfilter())
     {
+        domFx_sampler_filter_common filter = minFilerRef->getValue();
+        switch(filter)
+        {
+        case FX_SAMPLER_FILTER_COMMON_NONE:
+            break;
+        case FX_SAMPLER_FILTER_COMMON_NEAREST:
+            foMinFilter = Ogre::FO_POINT;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_LINEAR:
+            foMinFilter = Ogre::FO_LINEAR;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_NEAREST_MIPMAP_NEAREST:
+            foMinFilter = Ogre::FO_POINT;
+            foMipFilter = Ogre::FO_POINT;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_NEAREST_MIPMAP_LINEAR:
+            foMinFilter = Ogre::FO_POINT;
+            foMipFilter = Ogre::FO_LINEAR;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_LINEAR_MIPMAP_NEAREST:
+            foMinFilter = Ogre::FO_LINEAR;
+            foMipFilter = Ogre::FO_POINT;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_LINEAR_MIPMAP_LINEAR:
+            foMinFilter = Ogre::FO_LINEAR;
+            foMipFilter = Ogre::FO_LINEAR;
+            break;
+        }
+    }
+
+    if(domFx_sampler2D_common_complexType::domMagfilterRef magFilerRef = sampler2dRef->getMagfilter())
+    {
+        domFx_sampler_filter_common filter = magFilerRef->getValue();
+        switch(filter)
+        {
+        case FX_SAMPLER_FILTER_COMMON_NONE:
+            break;
+        case FX_SAMPLER_FILTER_COMMON_NEAREST:
+            foMagFilter = Ogre::FO_POINT;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_LINEAR:
+            foMagFilter = Ogre::FO_LINEAR;
+            break;
+        }
+    }
+
+    if(domFx_sampler2D_common_complexType::domMipfilterRef mipFilerRef = sampler2dRef->getMipfilter())
+    {
+        domFx_sampler_filter_common filter = mipFilerRef->getValue();
+        switch(filter)
+        {
+        case FX_SAMPLER_FILTER_COMMON_NONE:
+            break;
+        case FX_SAMPLER_FILTER_COMMON_NEAREST:
+            foMipFilter = Ogre::FO_POINT;
+            break;
+        case FX_SAMPLER_FILTER_COMMON_LINEAR:
+            foMipFilter = Ogre::FO_LINEAR;
+            break;
+        }
+    }
+    pTextureUnitState->setTextureFiltering(foMinFilter, foMagFilter, foMipFilter);
+
+    //for later : maybe support texture wrapping modes, for now just leave it at the ogre default
+}
+//-----------------------------------------------------------------------------
+PathBasename CMaterialConverter::_getPathBasenameFromUri(xsAnyURI _uri)
+{
+    std::string uriPath = _uri.getPath();
+    std::string uriScheme = _uri.getScheme();
+
+    std::string fullURI = cologreng::utility::makeFullUri(uriScheme, uriPath); 
+    std::string qualifiedName = cologreng::utility::convertUriToPath(fullURI);
+
+    std::string basename, path;
+    Ogre::StringUtil::splitFilename(qualifiedName, basename, path);
+
+    return PathBasename(path, basename);
+}
+//-----------------------------------------------------------------------------
+std::string CMaterialConverter::_makeGenericMaterialName(unsigned int _id)
+{
+    return utility::toString("DAE_Material_", m_uiElementCounter);
+}
+//-----------------------------------------------------------------------------
+Ogre::ColourValue CMaterialConverter::_convertDomColorToColourValue(domCommon_color_or_texture_type::domColorRef _colorRef)
+{
+    return Ogre::ColourValue(_colorRef->getValue()[0]
+                            ,_colorRef->getValue()[1]
+                            ,_colorRef->getValue()[2]
+                            ,_colorRef->getValue()[3]);
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::_addBlinnPass(domProfile_COMMON::domTechnique::domBlinnRef blinnRef, Ogre::Pass* pOgrePass )
+{
+    logMessage("Blinn", HasLog::LEVEL1);
+
+    domCommon_color_or_texture_typeRef typeRef;
+
+    // ambient component
+    typeRef = blinnRef->getAmbient();
+    pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
+    logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()), HasLog::LEVEL2);
+
+    // diffuse component : color or texture
+    typeRef = blinnRef->getDiffuse();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()), HasLog::LEVEL2);
+    }
+    else if(typeRef->getTexture())
+    {
+        convertTexture(typeRef->getTexture(), pOgrePass);
+    }
+
+    // specular        
+    typeRef = blinnRef->getSpecular();
+    pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));
+    logMessage(utility::toString("Specular : ", pOgrePass->getSpecular()), HasLog::LEVEL2);
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::_addPhongPass( domProfile_COMMON::domTechnique::domPhongRef phongRef, Ogre::Pass* pOgrePass )
+{
+    logMessage("Phong", HasLog::LEVEL1);
+    domCommon_color_or_texture_typeRef typeRef;
+
+    // ambient component
+    typeRef = phongRef->getAmbient();
+    pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
+    logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()), HasLog::LEVEL1);
+
+    // diffuse : color or texture
+    typeRef = phongRef->getDiffuse();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()), HasLog::LEVEL1);
+    } 
+    else if(typeRef->getTexture())
+    { 
+        convertTexture(typeRef->getTexture(), pOgrePass);
+    }
+
+    // specular
+    typeRef = phongRef->getSpecular();
+    pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));                                          
+    logMessage(utility::toString("Specular : ", pOgrePass->getSpecular()), HasLog::LEVEL1);
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::_add2DTexturePass( domFx_surface_commonRef surfaceRef, domFx_sampler2D_commonRef _sampler2dRef, Ogre::Pass* pOgrePass )
+{
+    // get image handle
+    daeElement *initFrom = surfaceRef->getChild("init_from");
+    std::string imageFile;
+    initFrom->getCharData(imageFile);
+
+    // find image in library
+    daeDocument *doc = initFrom->getDocument();
+    daeDatabase *db = initFrom->getDAE()->getDatabase();
+    domImage *pImg = daeSafeCast<domImage>(db->idLookup(imageFile, doc));
+
+    if(pImg)
+    {
+        domImage::domInit_fromRef initFromRef = pImg->getInit_from();
+        xsAnyURI imageURI = initFromRef->getValue();    
+        PathBasename pathBasename = _getPathBasenameFromUri(imageURI);
+
+        _addResourcesLocation(pathBasename.first);
+
+        logMessage(cologreng::utility::toString("Loading 2D image : ", pathBasename.second));
+
+        Ogre::TexturePtr pOgreTexture = Ogre::TextureManager::getSingleton().load(pathBasename.second, "DaeCustom", Ogre::TEX_TYPE_2D);
+        Ogre::TextureUnitState *pOgreTextureUnitState = pOgrePass->createTextureUnitState(pathBasename.second, 0);
+  
         xsToken imgFormat;
         domFx_surface_common_complexType::domFormatRef formatRef;
         if(formatRef = surfaceRef->getFormat())
@@ -237,102 +365,26 @@ void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_co
         if(imgWidth)
             pOgreTexture->setHeight(imgWidth);
 
-        setSamplerAttributes(sampler2dRef, pOgreTextureUnitState);
+        setSamplerAttributes(_sampler2dRef, pOgreTextureUnitState);
+    }
+    else
+    {
+        logMessage(utility::toString("Failed to load domImage for : ", imageFile));
     }
 }
 //-----------------------------------------------------------------------------
-void CMaterialConverter::setImageFormat(const xsToken colladaFormat, Ogre::TexturePtr pOgreTexture)
+void CMaterialConverter::_addResourcesLocation( const std::string &_path )
 {
-  if(colladaFormat == "A8R8G8B8")
-    pOgreTexture->setFormat(Ogre::PF_A8R8G8B8);
-}
-//-----------------------------------------------------------------------------
-void CMaterialConverter::setSamplerAttributes(const domFx_sampler2D_commonRef sampler2dRef, Ogre::TextureUnitState *pTextureUnitState)
-{
-  Ogre::FilterOptions foMinFilter = Ogre::FO_ANISOTROPIC;
-  Ogre::FilterOptions foMagFilter = Ogre::FO_ANISOTROPIC;
-  Ogre::FilterOptions foMipFilter = Ogre::FO_LINEAR;
-
-  if(domFx_sampler2D_common_complexType::domMinfilterRef minFilerRef = sampler2dRef->getMinfilter())
-  {
-    domFx_sampler_filter_common filter = minFilerRef->getValue();
-    switch(filter)
+    // check if the resources location was already added
+    if(m_spLocations->find(_path) == m_spLocations->end())
     {
-    case FX_SAMPLER_FILTER_COMMON_NONE:
-      break;
-    case FX_SAMPLER_FILTER_COMMON_NEAREST:
-      foMinFilter = Ogre::FO_POINT;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_LINEAR:
-      foMinFilter = Ogre::FO_LINEAR;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_NEAREST_MIPMAP_NEAREST:
-      foMinFilter = Ogre::FO_POINT;
-      foMipFilter = Ogre::FO_POINT;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_NEAREST_MIPMAP_LINEAR:
-      foMinFilter = Ogre::FO_POINT;
-      foMipFilter = Ogre::FO_LINEAR;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_LINEAR_MIPMAP_NEAREST:
-      foMinFilter = Ogre::FO_LINEAR;
-      foMipFilter = Ogre::FO_POINT;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_LINEAR_MIPMAP_LINEAR:
-      foMinFilter = Ogre::FO_LINEAR;
-      foMipFilter = Ogre::FO_LINEAR;
-      break;
+        logMessage(cologreng::utility::toString("Adding location ", _path, " to global resource manager"));
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(_path, "FileSystem", "DaeCustom");
     }
-  }
-
-  if(domFx_sampler2D_common_complexType::domMagfilterRef magFilerRef = sampler2dRef->getMagfilter())
-  {
-    domFx_sampler_filter_common filter = magFilerRef->getValue();
-    switch(filter)
+    else                
     {
-    case FX_SAMPLER_FILTER_COMMON_NONE:
-      break;
-    case FX_SAMPLER_FILTER_COMMON_NEAREST:
-      foMagFilter = Ogre::FO_POINT;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_LINEAR:
-      foMagFilter = Ogre::FO_LINEAR;
-      break;
+        logMessage(cologreng::utility::toString("Location ", _path, " already added to resource manager"));
     }
-  }
-
-  if(domFx_sampler2D_common_complexType::domMipfilterRef mipFilerRef = sampler2dRef->getMipfilter())
-  {
-    domFx_sampler_filter_common filter = mipFilerRef->getValue();
-    switch(filter)
-    {
-    case FX_SAMPLER_FILTER_COMMON_NONE:
-      break;
-    case FX_SAMPLER_FILTER_COMMON_NEAREST:
-      foMipFilter = Ogre::FO_POINT;
-      break;
-    case FX_SAMPLER_FILTER_COMMON_LINEAR:
-      foMipFilter = Ogre::FO_LINEAR;
-      break;
-    }
-  }
-  pTextureUnitState->setTextureFiltering(foMinFilter, foMagFilter, foMipFilter);
-
-  //for later : maybe support texture wrapping modes, for now just leave it at the ogre default
-}
-//-----------------------------------------------------------------------------
-PathBasename CMaterialConverter::_getPathBasenameFromUri(xsAnyURI _uri)
-{
-    std::string uriPath = _uri.getPath();
-    std::string uriScheme = _uri.getScheme();
-
-    std::string fullURI = cologreng::utility::makeFullUri(uriScheme, uriPath); 
-    std::string qualifiedName = cologreng::utility::convertUriToPath(fullURI);
-
-    std::string basename, path;
-    Ogre::StringUtil::splitFilename(qualifiedName, basename, path);
-
-    return PathBasename(path, basename);
 }
 //-----------------------------------------------------------------------------
 } // namespace cologreng

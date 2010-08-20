@@ -35,9 +35,6 @@ public:
 
 
 protected:
-    PathBasename _getPathBasenameFromUri(xsAnyURI _uri);
-
-protected:
     ///adds COMMON techniques as techniques of the passed Ogre material
     void addTechnique_COMMON(const domProfile_COMMON::domTechniqueRef techRef, Ogre::MaterialPtr pMat);
     ///converts a collada texture definition to an Ogre pass, adds texture path as resource location, loads texture image
@@ -46,6 +43,15 @@ protected:
     void setImageFormat(const xsToken colladaFormat, Ogre::TexturePtr pOgreTexture);
     ///for now it only sets texture filters
     void setSamplerAttributes(const domFx_sampler2D_commonRef sampler2dRef, Ogre::TextureUnitState* pTextureUnitState);
+
+
+    PathBasename _getPathBasenameFromUri(xsAnyURI _uri);
+    std::string  _makeGenericMaterialName(unsigned int _id);
+    Ogre::ColourValue _convertDomColorToColourValue(domCommon_color_or_texture_type::domColorRef _color);
+    void _addPhongPass( domProfile_COMMON::domTechnique::domPhongRef phongRef, Ogre::Pass* pOgrePass );
+    void _addBlinnPass( domProfile_COMMON::domTechnique::domBlinnRef blinnRef, Ogre::Pass* pOgrePass );
+    void _add2DTexturePass( domFx_surface_commonRef surfaceRef, domFx_sampler2D_commonRef _sampler2dRef,  Ogre::Pass* pOgrePass );
+    void _addResourcesLocation(const std::string &_path);
 
 
 protected:

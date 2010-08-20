@@ -17,7 +17,7 @@ void ColladaLoaderApp::createScene()
     //ret = db.load("../../media/indochine_tris.DAE");
 
     int ret = 0;
-    ret = mColladaDatabase.load("../../media/cube.dae");
+    ret = mColladaDatabase.load("../../media/plane_box_light.DAE");
     assert(ret == 0);              
 
     mColladaDatabase.convertResources();
@@ -56,8 +56,7 @@ void ColladaLoaderApp::_dumpMaterialList(Ogre::Log *_log)
         s << " group=" << currentMaterial->getGroup() << "]";            
         _log->logMessage(s.str());
     }
-
-};
+}
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::_dumpTextureList(Ogre::Log *_log)
 {
@@ -81,7 +80,7 @@ void ColladaLoaderApp::_dumpTextureList(Ogre::Log *_log)
                                 
         _log->logMessage(s.str());
     }
-};
+}
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::_dumpMeshList(Ogre::Log* _log)
 {
@@ -101,7 +100,7 @@ void ColladaLoaderApp::_dumpMeshList(Ogre::Log* _log)
         _dumpSharedData(_log, currentMesh);
         _dumpSubmeshList(_log, currentMesh);                                            
     }
-};
+}
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::_dumpSharedData(Ogre::Log *_log, Ogre::MeshPtr _mesh)
 {
