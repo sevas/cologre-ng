@@ -14,9 +14,11 @@ class ColladaLoaderApp : public ExampleApplication
 public:
 
     void createScene();
-    void createGrid(int _units);
 
 protected:
+    void createGrid(int _units);
+    void createLight();
+
     void _dumpResourceList();
     void _dumpMaterialList(Ogre::Log *_log);
     void _dumpTextureList(Ogre::Log *_log);

@@ -71,27 +71,27 @@ void CColladaDatabase::convertResources()
     delete pResConv;
 }
 //------------------------------------------------------------------------------
-void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager)
+void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode)
 {
-  daeElement* pElement = NULL;
-  m_pDatabase->getElement(&pElement, 0, NULL, "scene", NULL);
-  CSceneConverter* pSceneConv = NULL;
-  pSceneConv = new CSceneConverter(m_pLog);
-  pSceneConv->convert(pElement, pOgreSceneManager);
-  delete pSceneConv;
+    daeElement* pElement = NULL;
+    m_pDatabase->getElement(&pElement, 0, NULL, "scene", NULL);
+    CSceneConverter* pSceneConv = NULL;
+    pSceneConv = new CSceneConverter(m_pLog);
+    pSceneConv->convert(pElement, pOgreSceneManager, pParentNode);
+    delete pSceneConv;
 }
 //------------------------------------------------------------------------------
 void CColladaDatabase::parseAsset()
 {
-  daeElement* pElement = NULL;
-  m_pDatabase->getElement(&pElement, 0, NULL, "asset", NULL);
-  if(pElement)
-  {
-    domAsset* pAsset = daeSafeCast<domAsset>(pElement);
-    domAsset::domUp_axisRef upAxisRef = pAsset->getUp_axis();
-    if(upAxisRef->hasValue() && upAxisRef->getValue() == UPAXISTYPE_Z_UP)
-      CConverter::m_zUp = true;
-  }
+    daeElement* pElement = NULL;
+    m_pDatabase->getElement(&pElement, 0, NULL, "asset", NULL);
+    if(pElement)
+    {
+        domAsset* pAsset = daeSafeCast<domAsset>(pElement);
+        domAsset::domUp_axisRef upAxisRef = pAsset->getUp_axis();
+        if(upAxisRef->hasValue() && upAxisRef->getValue() == UPAXISTYPE_Z_UP)
+            CConverter::m_zUp = true;
+    }
 }  
 //-----------------------------------------------------------------------------
 void CColladaDatabase::_initLogger()

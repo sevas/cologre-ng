@@ -148,8 +148,6 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
         }
     }
 
-    logMessage("");
-
     return ALL_OK;
 }
 //------------------------------------------------------------------------------
@@ -263,9 +261,9 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
                 vec3.z = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 2];
 
             if(m_convOptions.flipTextureH == true)
-                vec3.y *= -1.0;
-            else if(m_convOptions.flipTextureV == true)
-                vec3.x *= -1.0;
+                vec3.y = 1.0 - vec3.y;
+            if(m_convOptions.flipTextureV == true)
+                vec3.x = 1.0 - vec3.x;
 
             *pData = vec3.x;
             ++pData;
@@ -287,6 +285,8 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
     int totalIndexCount = 0;
     for(unsigned int i = 0; i < pIM->m_subMeshCount; ++i)
     {
+        logMessage(utility::toString("Adding submesh ", i, " to ", pOgreMesh->getName(), " : ", pIM->m_vSubMeshNames[i]));
+
         Ogre::SubMesh* pSubMesh = pOgreMesh->createSubMesh(pIM->m_vSubMeshNames[i]);
         pSubMesh->indexData->indexCount = pIM->m_vSubMeshVertexCount[i];
         pSubMesh->indexData->indexStart = 0;
@@ -387,9 +387,7 @@ void CGeometryConverter::buildVertexDeclFromInputArray(const daeElementRef elemR
 
                 else
                 {
-                    // TODO : should probabl throw an exception
-                    cologreng::utility::toString("[ERROR]", "Unknown semantic ", strSem);
-                    return;
+                    OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED, utility::toString("Unknown semantic ", strSem), "cologre::CGeometryConverter::buildVertexDeclFromInputArray");
                 }
 
                 size_t offset = pDecl->getVertexSize(0);
@@ -444,9 +442,9 @@ void CGeometryConverter::copyData(domPRef pRef, const std::vector<domSource*> &v
                 if(pVertexDecl->getElement(j % pVertexDecl->getElementCount())->getSemantic() == Ogre::VES_TEXTURE_COORDINATES)
                 {
                     if(m_convOptions.flipTextureH == true)
-                        vec2.y *= -1.0;
-                    else if(m_convOptions.flipTextureV == true)
-                        vec2.x *= -1.0;
+                        vec2.y = 1.0 - vec2.y;
+                    if(m_convOptions.flipTextureV == true)
+                        vec2.x = 1.0 - vec2.x;
                 }
                 pDest->data.push_back(vec2.x);
                 pDest->data.push_back(vec2.y);
@@ -460,9 +458,9 @@ void CGeometryConverter::copyData(domPRef pRef, const std::vector<domSource*> &v
                 if(pVertexDecl->getElement(j % pVertexDecl->getElementCount())->getSemantic() == Ogre::VES_TEXTURE_COORDINATES)
                 {
                     if(m_convOptions.flipTextureH == true)
-                        vec3.y *= -1.0;
+                        vec3.y = 1.0 - vec3.y;
                     else if(m_convOptions.flipTextureV == true)
-                        vec3.x *= -1.0;
+                        vec3.x = 1.0 - vec3.x;
                 }
                 else
                 {

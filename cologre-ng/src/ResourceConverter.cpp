@@ -7,7 +7,7 @@ namespace cologreng{
 //------------------------------------------------------------------------------
 unsigned int CResourceConverter::m_uiElementCounter = 0;
 
-conversionOptions CConverter::m_convOptions(false, false);
+conversionOptions CConverter::m_convOptions(true, false);
 bool CConverter::m_zUp(false);
 //------------------------------------------------------------------------------
 CResourceConverter::CResourceConverter(Ogre::Log *_log)
@@ -22,12 +22,12 @@ CResourceConverter::~CResourceConverter()
 //------------------------------------------------------------------------------
 int CResourceConverter::convert(daeDatabase* pDatabase)
 {
-  if(!pDatabase)
-  {
-    logMessage(utility::toString("Element param not valid, aborting!"));
-    return 1;
-  }
-  return 0;
+    if(!pDatabase)
+    {
+        logMessage(utility::toString("Element param not valid, aborting!"));
+        return 1;
+    }
+    return 0;
 }
 //------------------------------------------------------------------------------
 } //namespace cologreng

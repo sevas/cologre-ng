@@ -49,8 +49,9 @@ public:
       definition but have not been converted to Ogre before calling this function will NOT be automatically converted and therefore
       will NOT be appear in the scene.
       @param pOgreSceneManager Pointer to an ogre scene Manager object that has to have been created before calling this function.
+      @param pParentNode Pointer to the ogre scene nodeto use as root to build the collada scene.
     */
-    void convertScene(Ogre::SceneManager* pOgreSceneManager);
+    void convertScene(Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode);
 
 protected:
     void _initLogger();  

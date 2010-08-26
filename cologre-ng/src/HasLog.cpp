@@ -14,6 +14,7 @@ const std::string HasLog::sSpaces = std::string("    ");
 //------------------------------------------------------------------------------
 HasLog::HasLog(Ogre::Log *_log)
     :mLog(_log)
+    ,mCurrentIndentLevel(0)
 {
 #ifdef _DEBUG
     assert(mLog);
@@ -21,10 +22,24 @@ HasLog::HasLog(Ogre::Log *_log)
 
 }
 //------------------------------------------------------------------------------
-void HasLog::logMessage(const std::string &_msg, int _indentLevel) 
+void HasLog::logMessage(const std::string &_msg) 
 {
-    std::string spaces = _makeIndent(_indentLevel);
+    std::string spaces = _makeIndent(mCurrentIndentLevel);
     mLog->logMessage(spaces + _msg);
+}
+//------------------------------------------------------------------------------
+void HasLog::indent()
+{
+    if(mCurrentIndentLevel < 20)
+        mCurrentIndentLevel++;
+}
+//------------------------------------------------------------------------------
+void HasLog::dedent()
+{
+    if(mCurrentIndentLevel > 0)
+        mCurrentIndentLevel--;
+    else
+        throw std::exception("Indent level can't be below 0");
 }
 //------------------------------------------------------------------------------
 std::string HasLog::_makeIndent(int _indentLevel)

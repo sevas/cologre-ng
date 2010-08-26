@@ -12,18 +12,18 @@ namespace cologreng{
 class HasLog
 {
 public:
-    typedef enum{LEVEL0=0, LEVEL1, LEVEL2, LEVEL3} IndentLevels;
-
-public:
     HasLog(Ogre::Log *_log);
     virtual ~HasLog() {mLog = NULL;};
-    void logMessage(const std::string &_msg, int _indentLevel=0);
+    void logMessage(const std::string &_msg);
+    void indent();
+    void dedent();
 
 protected:
     std::string _makeIndent(int _indentLevel);
 
 protected:
     Ogre::Log *mLog;
+    int mCurrentIndentLevel;
     static const std::string sSpaces;
 };
 }

@@ -10,6 +10,7 @@ namespace cologreng{
 //------------------------------------------------------------------------------
 CSceneConverter::CSceneConverter(Ogre::Log *_log)
     :HasLog(_log)
+    ,mGenericNodeID(0)
 {
     m_hasLight = false;
 }
@@ -18,9 +19,17 @@ CSceneConverter::~CSceneConverter()
 {
 }
 //------------------------------------------------------------------------------
-int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreSceneManager)
+int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode)
 {
-    Ogre::SceneNode* pRootNode = pOgreSceneManager->getRootSceneNode();
+    logMessage("Converting scene");
+    logMessage("-------------------------------------------------");
+
+#ifdef _DEBUG
+    assert(pOgreSceneManager);
+    assert(pParentNode);
+#endif
+
+    Ogre::SceneNode* pRootNode = pParentNode;
     domCOLLADA::domScene* pScene = (domCOLLADA::domScene*)pElement;
     domInstanceWithExtraRef instanceRef = pScene->getInstance_visual_scene();
     daeURI uri(instanceRef->getUrl());
@@ -29,16 +38,13 @@ int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreScen
     domVisual_scene* pVisualScene = daeSafeCast<domVisual_scene>(&(*uri.getElement()));
     domNode_Array nodeArray = pVisualScene->getNode_array();
 
+    logMessage("Building scenenodes");
     buildSceneHierarchy(&nodeArray, pRootNode, pOgreSceneManager);
+
 
     if(!m_hasLight && CConverter::m_convOptions.addDefaultLight == true)
     {
-        Ogre::Light* pOgreLight = NULL;
-        pOgreLight = pOgreSceneManager->createLight("default_light");
-        pOgreLight->setType(Ogre::Light::LT_DIRECTIONAL);
-        pOgreLight->setVisible(true);
-        pOgreLight->setDiffuseColour(Ogre::ColourValue(1.0f, 1.0f, 1.0f, 1.0f));
-        pOgreLight->setDirection(1.0f, -1.0f, 1.0f);
+        //_createDefaultLight(pOgreSceneManager);
     }
     return 0;
 }
@@ -78,192 +84,36 @@ void CSceneConverter::buildSceneHierarchy(domNode_Array *pNodeArray, Ogre::Scene
     {
         Ogre::SceneNode* pSceneNode = NULL;
         domNodeRef nodeRef = pNodeArray->get(i);
-        if(nodeRef->getType() != NODETYPE_JOINT)
+        if(nodeRef->getType() == NODETYPE_NODE)
         {
             xsID nodeID = nodeRef->getID();
-            pSceneNode = pParentNode->createChildSceneNode(nodeRef->getId());
+            std::string nodeName;
 
-            //create scene instances from geometry
-            domInstance_geometry_Array instanceGeometryArray = nodeRef->getInstance_geometry_array();
-            for(unsigned int i = 0; i < instanceGeometryArray.getCount(); ++i)
+            if(nodeID)
+            {            
+                nodeName = nodeID;
+            }
+            else
             {
-                //transform scene node
-                transformNode(nodeRef.cast(), pSceneNode);
-
-                //find the right mesh
-                domInstance_geometryRef instanceGeometryRef = instanceGeometryArray.get(i);
-                daeURI uri(instanceGeometryRef->getUrl());
-                //uri.resolveURI();
-                uri.getElement();
-                domGeometry* pGeometry = daeSafeCast<domGeometry>(&(*uri.getElement()));
-
-                Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().getByName(pGeometry->getId());
-                if(!pOgreMesh.isNull())
-                {
-                    //bind the right material to the mesh
-                    domBind_materialRef bindMaterialRef = instanceGeometryRef->getBind_material();
-                    if(bindMaterialRef)
-                    {
-                        domBind_material::domTechnique_commonRef techniqueCommonRef = bindMaterialRef->getTechnique_common();
-                        domInstance_material_Array instanceMaterialArray = techniqueCommonRef->getInstance_material_array();
-
-                        for(unsigned int j = 0; j < instanceMaterialArray.getCount(); ++j)
-                        {
-                            Ogre::SubMesh* pSubMesh = pOgreMesh->getSubMesh(instanceMaterialArray.get(j)->getSymbol());
-                            if(pSubMesh)
-                                pSubMesh->setMaterialName(instanceMaterialArray.get(j)->getTarget().getElement()->getID());
-                            else
-                                logMessage(utility::toString("[ERROR] SubMesh ", instanceMaterialArray.get(j)->getSymbol(), " not found in Mesh ", pGeometry->getId()));
-                        }
-                    }
-                    //create the scene entity from the mesh and attach it to the transformed scene node
-                    Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName(), pGeometry->getId());
-                    if(pEntity)
-                    {
-                        pSceneNode->attachObject(pEntity);
-                        pEntity->setNormaliseNormals(true);
-                    }
-                    else
-                        logMessage(utility::toString("[ERROR] Error adding entity ", pEntity->getName())); 
-                }
-                else
-                    logMessage(utility::toString("[ERROR] Mesh resource ", pGeometry->getId(), " not loaded."));
+                nodeName = _makeNodeID(); 
+                logMessage(utility::toString("[Warning] Current node does not have a name, using : ", nodeName, " instead"));
             }
 
-            //create scene instances from controllers (bones, etc...)
-            domInstance_controller_Array instanceControllerArray = nodeRef->getInstance_controller_array();
-            for(unsigned int i = 0; i < instanceControllerArray.getCount(); ++i)
-            {
-                //find the right controller
-                domInstance_controllerRef instanceControllerRef = instanceControllerArray.get(i);
-                daeURI uri(instanceControllerRef->getUrl());
-                //uri.resolveURI();
-                uri.getElement();
-                domController* pController = daeSafeCast<domController>(&(*uri.getElement()));
+            pSceneNode = pParentNode->createChildSceneNode(nodeName);
+            logMessage(utility::toString("Adding scene node : ", nodeName));
 
-                //find the skin
-                domSkinRef skinRef = pController->getSkin();
+            _instantiateGeometry(nodeRef, pSceneNode, pOgreSceneManager);
+            //_instantiateSkeletons(nodeRef, pOgreSceneManager, pSceneNode);
+            _instantiateLights(nodeRef, pOgreSceneManager, pSceneNode, true);
 
-                //bind material to the mesh, which includes building the skeleton from the bones
-                domBind_materialRef bindMaterialRef = instanceControllerRef->getBind_material();
-                domInstance_controller::domSkeletonRef skeletonRef = instanceControllerRef->getSkeleton_array().get(0);
-                domNode* pNode = daeSafeCast<domNode>(skeletonRef->getValue().getElement());
-                std::string strSkeletonName(pNode->getID());
-                if(Ogre::SkeletonManager::getSingleton().getByName(strSkeletonName).isNull())
-                {
-                    Ogre::SkeletonPtr pOgreSkeleton = Ogre::SkeletonManager::getSingleton().create(pNode->getId(), "DaeCustom");
-                    if(bindMaterialRef)
-                    {
-                        //create all the bones, but do not yet transform them, because the mesh is not bound to the skeleton yet
-                        buildSkeleton(pNode, NULL, pOgreSkeleton);
-                        //find the mesh
-                        Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().getByName(skinRef->getSource().getElement()->getID());
-                        if(!pOgreMesh.isNull())
-                        {
-                            pOgreMesh->_notifySkeleton(pOgreSkeleton);
-                            domBind_material::domTechnique_commonRef techniqueCommonRef = bindMaterialRef->getTechnique_common();
-                            domInstance_material_Array instanceMaterialArray = techniqueCommonRef->getInstance_material_array();
-                            for(unsigned int j = 0; j < instanceMaterialArray.getCount(); ++j)
-                            {
-                                Ogre::SubMesh* pSubMesh = pOgreMesh->getSubMesh(instanceMaterialArray.get(j)->getSymbol());
-                                if(pSubMesh)
-                                    pSubMesh->setMaterialName(instanceMaterialArray.get(j)->getTarget().getElement()->getID());
-                                else
-                                    logMessage(utility::toString("[ERROR] SubMesh ", instanceMaterialArray.get(j)->getSymbol(), " not found in Mesh ", skinRef->getSource().getElement()->getID()));
-                            }
-                        }
-                        else
-                            logMessage(utility::toString("[ERROR] Mesh resource ", skinRef->getSource().getElement()->getID(), " not loaded."));
-                    }
-
-                    //now check for the bind pose
-                    domSkin::domJointsRef jointsRef = skinRef->getJoints();
-                    if(jointsRef)
-                    { 
-                        domInputLocal_Array inputArray = jointsRef->getInput_array();
-                        for(unsigned int i = 0; i < inputArray.getCount(); ++i)
-                        {
-                            domInputLocalRef inputRef = inputArray.get(i);
-                            domURIFragmentType source = inputRef->getSource();
-                            daeElementRef sourceElementRef = source.getElement();
-                            std::string strSem = inputRef->getSemantic();
-                            domName_arrayRef nameArrayRef;
-                            if(strSem == "INV_BIND_MATRIX")
-                            {
-                                //move all bones to their initial position using the inverse bind pose matrices
-                                domSource* pSource = (domSource*)(&(*sourceElementRef));
-                                domFloat_arrayRef floatArrayRef = pSource->getFloat_array(); 
-                                Ogre::Skeleton::BoneIterator iterBones = pOgreSkeleton->getBoneIterator();
-                                for(unsigned int i = 0; i < floatArrayRef->getCount() / 16; ++i)
-                                {
-                                    Ogre::Matrix4 matBindPose(floatArrayRef->getValue().get(i * 16 + 0), floatArrayRef->getValue().get(i * 16 + 1), floatArrayRef->getValue().get(i * 16 + 2), floatArrayRef->getValue().get(i * 16 + 3),
-                                        floatArrayRef->getValue().get(i * 16 + 4), floatArrayRef->getValue().get(i * 16 + 5), floatArrayRef->getValue().get(i * 16 + 6), floatArrayRef->getValue().get(i * 16 + 7),
-                                        floatArrayRef->getValue().get(i * 16 + 8), floatArrayRef->getValue().get(i * 16 + 9), floatArrayRef->getValue().get(i * 16 + 10), floatArrayRef->getValue().get(i * 16 + 11),
-                                        floatArrayRef->getValue().get(i * 16 + 12), floatArrayRef->getValue().get(i * 16 + 13), floatArrayRef->getValue().get(i * 16 + 14), floatArrayRef->getValue().get(i * 16 + 15));
-
-                                    matBindPose = matBindPose.inverse();
-                                    Ogre::Quaternion quatDerived = iterBones.peekNext()->_getDerivedOrientation();
-                                    if(m_zUp)
-                                    {
-                                        Ogre::Quaternion quatBindPose = flipAxes(&matBindPose.extractQuaternion());
-                                        iterBones.peekNext()->rotate(quatDerived.Inverse() * quatBindPose, Ogre::Node::TS_LOCAL);
-                                        Ogre::Vector3 vecDerived = iterBones.peekNext()->_getDerivedPosition();
-                                        Ogre::Vector3 vec = flipAxes(&matBindPose.getTrans()) - vecDerived;
-                                        iterBones.getNext()->translate(vec, Ogre::Node::TS_WORLD);
-                                    }
-                                    else
-                                    {
-                                        iterBones.peekNext()->rotate(quatDerived.Inverse() * matBindPose.extractQuaternion(), Ogre::Node::TS_WORLD);
-                                        Ogre::Vector3 vecDerived = iterBones.peekNext()->_getDerivedPosition();
-                                        iterBones.getNext()->translate((matBindPose[0])[3] - vecDerived.x,
-                                            (matBindPose[1])[3] - vecDerived.y,
-                                            (matBindPose[2])[3] - vecDerived.z, Ogre::Node::TS_WORLD);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    pOgreSkeleton->setBindingPose();
-
-                    //bind the mesh with it's skeleton to the scene node. !!HERE, OGRE CREATES A NEW INSTANCE OF THE SKELETON, SO THAT EACH MESH
-                    //HAS ITS OWN COPY. AFTER THAT, THE MESH CAN BE TRANSFORMED USING THE BONES
-                    std::string id(skinRef->getSource().getElement()->getID());
-                    Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName(), id);
-                    if(pEntity)
-                    {
-                        pSceneNode->attachObject(pEntity);      
-                        pEntity->setNormaliseNormals(true);
-                        //pEntity->setDisplaySkeleton(true);
-                    }
-                    Ogre::SkeletonInstance* pOgreSkeletonInstance = pEntity->getSkeleton();
-                    //now, transform all the bones to their correct location in the scene
-                    transformSkeleton(pNode, pOgreSkeletonInstance);
-                }
-            }
-
-            //create scene instances from lights
-            domInstance_light_Array instanceLightArray = nodeRef->getInstance_light_array();
-            for(unsigned int i = 0; i < instanceLightArray.getCount(); ++i)
-            {
-                domInstance_lightRef instanceLightRef = instanceLightArray.get(i);
-                daeURI uri(instanceLightRef->getUrl());
-                //uri.resolveURI();
-                uri.getElement();
-                domLight* pLight = daeSafeCast<domLight>(&(*uri.getElement()));
-                Ogre::Light* pOgreLight = convertLight(pLight, pOgreSceneManager);
-                if(pOgreLight)
-                {
-                    m_hasLight = true;
-                    pSceneNode->attachObject(pOgreLight);
-                    //transform scene node
-                    transformNode(nodeRef.cast(), pSceneNode);
-                }
-            }
-
+            // recursive call
             domNode_Array nodeArray = nodeRef->getNode_array();
-            if(nodeArray.getCount())
+            if(nodeArray.getCount() > 0)
+            {
+                HasLog::indent();
                 buildSceneHierarchy(&nodeArray, pSceneNode, pOgreSceneManager);
-
+                HasLog::dedent();
+            }
         }
     }
 }
@@ -330,6 +180,8 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
     domLight::domTechnique_commonRef techniqueCommonRef = pLight->getTechnique_common();
     if(domLight::domTechnique_common::domPointRef pointRef = techniqueCommonRef->getPoint())
     {
+        logMessage(utility::toString("Adding point light : ", pLight->getId()));
+
         pOgreLight = pOgreSceneManager->createLight(pLight->getId());
         pOgreLight->setType(Ogre::Light::LT_POINT);
         pOgreLight->setVisible(true);
@@ -380,19 +232,14 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
 
         else
         {
-            if(pointRef->getConstant_attenuation() && 
-                pointRef->getLinear_attenuation() && 
-                pointRef->getQuadratic_attenuation())
-            {
-                pOgreLight->setAttenuation(attenuationRange, pointRef->getConstant_attenuation()->getValue(),
-                    pointRef->getLinear_attenuation()->getValue(),
-                    pointRef->getQuadratic_attenuation()->getValue());
-            }
+            _setLightAttenuation(pointRef, pOgreLight, attenuationRange);
         }
     }
 
     else if(domLight::domTechnique_common::domDirectionalRef directRef = techniqueCommonRef->getDirectional())
     {
+        logMessage(utility::toString("Adding directional light : ", pLight->getId()));
+
         pOgreLight = pOgreSceneManager->createLight(pLight->getId());
         pOgreLight->setType(Ogre::Light::LT_DIRECTIONAL);
         pOgreLight->setVisible(true);
@@ -400,6 +247,266 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
         pOgreLight->setDiffuseColour(colorRef->getValue().get(0), colorRef->getValue().get(1), colorRef->getValue().get(2));
     }
     return pOgreLight;
+}
+//------------------------------------------------------------------------------
+Ogre::MeshPtr CSceneConverter::_getOgreMesh( domInstance_geometryRef instanceGeometryRef)
+{
+    daeURI uri(instanceGeometryRef->getUrl());
+    uri.getElement();
+    domGeometry* pGeometry = daeSafeCast<domGeometry>(&(*uri.getElement()));
+    logMessage(utility::toString("Found mesh ID to load : ", pGeometry->getId()));
+
+    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().getByName(pGeometry->getId());
+
+    if(mesh.isNull())
+        logMessage(utility::toString("[Warning] Mesh resource ", pGeometry->getId(), " does not exist"));
+    else
+        logMessage(utility::toString("Ogre mesh loaded : ", mesh->getName()));
+
+    return mesh;
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_bindMaterialsToMesh( domBind_materialRef bindMaterialRef, Ogre::MeshPtr ogreMesh )
+{
+    domBind_material::domTechnique_commonRef techniqueCommonRef = bindMaterialRef->getTechnique_common();
+    domInstance_material_Array instanceMaterialArray = techniqueCommonRef->getInstance_material_array();
+
+    for(unsigned int j = 0; j < instanceMaterialArray.getCount(); ++j)
+    {
+        if(ogreMesh->getSubMeshNameMap().find(instanceMaterialArray.get(j)->getSymbol()) != ogreMesh->getSubMeshNameMap().end())
+        {
+            Ogre::SubMesh* pSubMesh = ogreMesh->getSubMesh(instanceMaterialArray.get(j)->getSymbol());
+            if(pSubMesh)
+            {
+                daeString materialName = instanceMaterialArray.get(j)->getTarget().getElement()->getID();
+                logMessage(utility::toString("Binding material ", std::string(materialName), " to submesh ",  ogreMesh->getName(), "[", j,"]" ));
+                pSubMesh->setMaterialName(materialName);
+            } 
+            else
+                logMessage(utility::toString("[Warning] SubMesh ", instanceMaterialArray.get(j)->getSymbol(), " not found in mesh ", ogreMesh->getName()));
+        }
+    }
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_instantiateLights( domNodeRef &nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode, bool _addBillboard )
+{
+    //create scene instances from lights
+    domInstance_light_Array instanceLightArray = nodeRef->getInstance_light_array();
+
+    if(instanceLightArray.getCount() > 0)
+        logMessage("Instantiating lights");
+
+   for(unsigned int i = 0; i < instanceLightArray.getCount(); ++i)
+    {
+        domInstance_lightRef instanceLightRef = instanceLightArray.get(i);
+        daeURI uri(instanceLightRef->getUrl());
+        //uri.resolveURI();
+        uri.getElement();
+        domLight* pLight = daeSafeCast<domLight>(&(*uri.getElement()));
+        Ogre::Light* pOgreLight = convertLight(pLight, pOgreSceneManager);
+        if(pOgreLight)
+        {
+            m_hasLight = true;
+            pSceneNode->attachObject(pOgreLight);
+
+            Ogre::BillboardSet *bbset = pOgreSceneManager->createBillboardSet(pOgreLight->getName() + "flare");
+            bbset->setMaterialName("Objects/Flare");
+            bbset->createBillboard(Ogre::Vector3::ZERO);
+            pSceneNode->attachObject(bbset);
+
+
+            transformNode(nodeRef.cast(), pSceneNode);
+        }
+    }
+    logMessage("");
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_instantiateGeometry( domNodeRef &nodeRef, Ogre::SceneNode* pSceneNode, Ogre::SceneManager* pOgreSceneManager)
+{
+    //create scene instances from geometry
+    domInstance_geometry_Array instanceGeometryArray = nodeRef->getInstance_geometry_array();
+
+    if(instanceGeometryArray.getCount() > 0)
+        logMessage("Instantiating geometry");
+
+    for(unsigned int i = 0; i < instanceGeometryArray.getCount(); ++i)
+    {
+        //transform scene node
+        transformNode(nodeRef.cast(), pSceneNode);
+
+        //find the right mesh
+        domInstance_geometryRef instanceGeometryRef = instanceGeometryArray.get(i);
+        Ogre::MeshPtr ogreMesh = _getOgreMesh(instanceGeometryRef);
+
+        if(!ogreMesh.isNull())
+        {
+            //bind the right material to the mesh
+            domBind_materialRef bindMaterialRef = instanceGeometryRef->getBind_material();
+            if(bindMaterialRef)
+            {
+                _bindMaterialsToMesh(bindMaterialRef, ogreMesh);
+            }
+
+            //create the scene entity from the mesh and attach it to the transformed scene node
+            Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName(), ogreMesh->getName());
+            if(pEntity)
+            {
+                pSceneNode->attachObject(pEntity);
+#if OGRE_VERSION_MAJOR == 1 &&   OGRE_VERSION_MINOR == 4
+                pEntity->setNormaliseNormals(true);
+#endif
+            }
+            else
+                logMessage(utility::toString("[ERROR] Error adding entity ", pEntity->getName())); 
+        }
+    }
+    logMessage("");
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_instantiateSkeletons( domNodeRef nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode )
+{
+    //create scene instances from controllers (bones, etc...)
+    domInstance_controller_Array instanceControllerArray = nodeRef->getInstance_controller_array();
+
+    if(instanceControllerArray.getCount() > 0)
+        logMessage("Instantiating skeletons");
+
+    for(unsigned int i = 0; i < instanceControllerArray.getCount(); ++i)
+    {
+        //find the right controller
+        domInstance_controllerRef instanceControllerRef = instanceControllerArray.get(i);
+        daeURI uri(instanceControllerRef->getUrl());
+        //uri.resolveURI();
+        uri.getElement();
+        domController* pController = daeSafeCast<domController>(&(*uri.getElement()));
+
+        //find the skin
+        domSkinRef skinRef = pController->getSkin();
+
+        //bind material to the mesh, which includes building the skeleton from the bones
+        domBind_materialRef bindMaterialRef = instanceControllerRef->getBind_material();
+        domInstance_controller::domSkeletonRef skeletonRef = instanceControllerRef->getSkeleton_array().get(0);
+        domNode* pNode = daeSafeCast<domNode>(skeletonRef->getValue().getElement());
+        std::string strSkeletonName(pNode->getID());
+        if(Ogre::SkeletonManager::getSingleton().getByName(strSkeletonName).isNull())
+        {
+            Ogre::SkeletonPtr pOgreSkeleton = Ogre::SkeletonManager::getSingleton().create(pNode->getId(), "DaeCustom");
+            if(bindMaterialRef)
+            {
+                //create all the bones, but do not yet transform them, because the mesh is not bound to the skeleton yet
+                buildSkeleton(pNode, NULL, pOgreSkeleton);
+                //find the mesh
+                Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().getByName(skinRef->getSource().getElement()->getID());
+                if(!pOgreMesh.isNull())
+                {
+                    pOgreMesh->_notifySkeleton(pOgreSkeleton);
+                    domBind_material::domTechnique_commonRef techniqueCommonRef = bindMaterialRef->getTechnique_common();
+                    domInstance_material_Array instanceMaterialArray = techniqueCommonRef->getInstance_material_array();
+                    for(unsigned int j = 0; j < instanceMaterialArray.getCount(); ++j)
+                    {
+                        Ogre::SubMesh* pSubMesh = pOgreMesh->getSubMesh(instanceMaterialArray.get(j)->getSymbol());
+                        if(pSubMesh)
+                            pSubMesh->setMaterialName(instanceMaterialArray.get(j)->getTarget().getElement()->getID());
+                        else
+                            logMessage(utility::toString("[Warning] SubMesh ", instanceMaterialArray.get(j)->getSymbol(), " not found in Mesh ", skinRef->getSource().getElement()->getID()));
+                    }
+                }
+                else
+                    logMessage(utility::toString("[Warning] Mesh resource ", skinRef->getSource().getElement()->getID(), " not loaded."));
+            }
+
+            //now check for the bind pose
+            domSkin::domJointsRef jointsRef = skinRef->getJoints();
+            if(jointsRef)
+            { 
+                domInputLocal_Array inputArray = jointsRef->getInput_array();
+                for(unsigned int i = 0; i < inputArray.getCount(); ++i)
+                {
+                    domInputLocalRef inputRef = inputArray.get(i);
+                    domURIFragmentType source = inputRef->getSource();
+                    daeElementRef sourceElementRef = source.getElement();
+                    std::string strSem = inputRef->getSemantic();
+                    domName_arrayRef nameArrayRef;
+                    if(strSem == "INV_BIND_MATRIX")
+                    {
+                        //move all bones to their initial position using the inverse bind pose matrices
+                        domSource* pSource = (domSource*)(&(*sourceElementRef));
+                        domFloat_arrayRef floatArrayRef = pSource->getFloat_array(); 
+                        Ogre::Skeleton::BoneIterator iterBones = pOgreSkeleton->getBoneIterator();
+                        for(unsigned int i = 0; i < floatArrayRef->getCount() / 16; ++i)
+                        {
+                            Ogre::Matrix4 matBindPose(floatArrayRef->getValue().get(i * 16 + 0), floatArrayRef->getValue().get(i * 16 + 1), floatArrayRef->getValue().get(i * 16 + 2), floatArrayRef->getValue().get(i * 16 + 3),
+                                floatArrayRef->getValue().get(i * 16 + 4), floatArrayRef->getValue().get(i * 16 + 5), floatArrayRef->getValue().get(i * 16 + 6), floatArrayRef->getValue().get(i * 16 + 7),
+                                floatArrayRef->getValue().get(i * 16 + 8), floatArrayRef->getValue().get(i * 16 + 9), floatArrayRef->getValue().get(i * 16 + 10), floatArrayRef->getValue().get(i * 16 + 11),
+                                floatArrayRef->getValue().get(i * 16 + 12), floatArrayRef->getValue().get(i * 16 + 13), floatArrayRef->getValue().get(i * 16 + 14), floatArrayRef->getValue().get(i * 16 + 15));
+
+                            matBindPose = matBindPose.inverse();
+                            Ogre::Quaternion quatDerived = iterBones.peekNext()->_getDerivedOrientation();
+                            if(m_zUp)
+                            {
+                                Ogre::Quaternion quatBindPose = flipAxes(&matBindPose.extractQuaternion());
+                                iterBones.peekNext()->rotate(quatDerived.Inverse() * quatBindPose, Ogre::Node::TS_LOCAL);
+                                Ogre::Vector3 vecDerived = iterBones.peekNext()->_getDerivedPosition();
+                                Ogre::Vector3 vec = flipAxes(&matBindPose.getTrans()) - vecDerived;
+                                iterBones.getNext()->translate(vec, Ogre::Node::TS_WORLD);
+                            }
+                            else
+                            {
+                                iterBones.peekNext()->rotate(quatDerived.Inverse() * matBindPose.extractQuaternion(), Ogre::Node::TS_WORLD);
+                                Ogre::Vector3 vecDerived = iterBones.peekNext()->_getDerivedPosition();
+                                iterBones.getNext()->translate((matBindPose[0])[3] - vecDerived.x,
+                                    (matBindPose[1])[3] - vecDerived.y,
+                                    (matBindPose[2])[3] - vecDerived.z, Ogre::Node::TS_WORLD);
+                            }
+                        }
+                    }
+                }
+            }
+            pOgreSkeleton->setBindingPose();
+
+            //bind the mesh with it's skeleton to the scene node. !!HERE, OGRE CREATES A NEW INSTANCE OF THE SKELETON, SO THAT EACH MESH
+            //HAS ITS OWN COPY. AFTER THAT, THE MESH CAN BE TRANSFORMED USING THE BONES
+            std::string id(skinRef->getSource().getElement()->getID());
+            Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName(), id);
+            if(pEntity)
+            {
+                pSceneNode->attachObject(pEntity);      
+                pEntity->setNormaliseNormals(true);
+                //pEntity->setDisplaySkeleton(true);
+            }
+            Ogre::SkeletonInstance* pOgreSkeletonInstance = pEntity->getSkeleton();
+            //now, transform all the bones to their correct location in the scene
+            transformSkeleton(pNode, pOgreSkeletonInstance);
+        }
+    }
+    logMessage("");
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_createDefaultLight( Ogre::SceneManager* pOgreSceneManager )
+{
+    Ogre::Light* pOgreLight = NULL;
+    pOgreLight = pOgreSceneManager->createLight("default_light");
+    pOgreLight->setType(Ogre::Light::LT_DIRECTIONAL);
+    pOgreLight->setVisible(true);
+    pOgreLight->setDiffuseColour(Ogre::ColourValue(1.0f, 1.0f, 1.0f, 1.0f));
+    pOgreLight->setDirection(1.0f, -1.0f, 1.0f);
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_setLightAttenuation( domLight::domTechnique_common::domPointRef pointRef, Ogre::Light* pOgreLight, float attenuationRange )
+{
+    if(pointRef->getConstant_attenuation() && 
+        pointRef->getLinear_attenuation() && 
+        pointRef->getQuadratic_attenuation())
+    {
+        pOgreLight->setAttenuation(attenuationRange, pointRef->getConstant_attenuation()->getValue(),
+            pointRef->getLinear_attenuation()->getValue(),
+            pointRef->getQuadratic_attenuation()->getValue());
+    }
+}
+//------------------------------------------------------------------------------
+std::string CSceneConverter::_makeNodeID()
+{
+    return utility::toString("Unnamed Node ", mGenericNodeID++);
 }
 //------------------------------------------------------------------------------
 } // namespace cologreng

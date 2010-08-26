@@ -181,9 +181,9 @@ protected:
         mcameraNode->attachObject(mCamera);
         mcameraNode->lookAt(Vector3(0, 0, -300), SceneNode::TS_WORLD);
 
-        Light *light = mSceneMgr->createLight("light");
         //light->setPosition(0, 300, 0);
-        mcameraNode->attachObject(light);
+        //Light *light = mSceneMgr->createLight("camera light");
+        //mcameraNode->attachObject(light);
     }
     virtual void createFrameListener(void)
     {
