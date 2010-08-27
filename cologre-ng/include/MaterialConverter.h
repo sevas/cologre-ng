@@ -51,14 +51,24 @@ protected:
     Ogre::Real _convertDomFloatToReal(const domCommon_float_or_param_typeRef &_val);
     void _addPhongPass( domProfile_COMMON::domTechnique::domPhongRef phongRef, Ogre::Pass* pOgrePass );
     void _addBlinnPass( domProfile_COMMON::domTechnique::domBlinnRef blinnRef, Ogre::Pass* pOgrePass );
+    void _addLambertPass( domProfile_COMMON::domTechnique::domLambertRef lambertRef, Ogre::Pass* pOgrePass );
+
     void _add2DTexturePass( domFx_surface_commonRef surfaceRef, domFx_sampler2D_commonRef _sampler2dRef,  Ogre::Pass* pOgrePass );
     void _addResourcesLocation(const std::string &_path);
     Ogre::TextureUnitState::TextureAddressingMode _convertDomWrappingToOgreTextureAddressingMode(domFx_sampler_wrap_common _wrapValue);
 
 
+    //template <typename T>
+    //void _addLightingPass(T ref, Ogre::Pass *pOgrePass);
+
+
 protected:
     LocationsPtr m_spLocations;
 };
+
+
+
+
 
 } // namespace cologreng
 

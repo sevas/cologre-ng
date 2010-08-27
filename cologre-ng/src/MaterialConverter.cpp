@@ -90,6 +90,7 @@ void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniq
     pOgreTech->removeAllPasses();
     Ogre::Pass* pOgrePass = pOgreTech->createPass();
 
+
     logMessage(utility::toString("Material ", pMat->getName(), " : adding pass"));
 
     domProfile_COMMON::domTechnique::domPhongRef phongRef = techRef->getPhong();
@@ -98,12 +99,144 @@ void CMaterialConverter::addTechnique_COMMON(const domProfile_COMMON::domTechniq
         _addPhongPass(phongRef, pOgrePass);
     }
 
-    // TODO : should be ifelse ?
     domProfile_COMMON::domTechnique::domBlinnRef blinnRef = techRef->getBlinn();
     if(blinnRef)
     {
         _addBlinnPass(blinnRef, pOgrePass);
     }
+
+    
+    domProfile_COMMON::domTechnique::domLambertRef lambertRef = techRef->getLambert();
+    if(lambertRef)
+    {
+        _addLambertPass(lambertRef, pOgrePass);
+    }
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::_addBlinnPass(domProfile_COMMON::domTechnique::domBlinnRef blinnRef, Ogre::Pass* pOgrePass )
+{
+    indent();
+    logMessage("Blinn");
+
+    domCommon_color_or_texture_typeRef typeRef;
+
+
+    // ambient component
+    typeRef = blinnRef->getAmbient();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()));
+    }
+
+    // diffuse component : color or texture
+    typeRef = blinnRef->getDiffuse();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()));
+    }
+    else if(typeRef->getTexture())
+    {
+        convertTexture(typeRef->getTexture(), pOgrePass);
+    }
+
+    // specular        
+    typeRef = blinnRef->getSpecular();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));
+        pOgrePass->setShininess(_convertDomFloatToReal(blinnRef->getShininess()));         
+        logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));                     
+    }
+
+    dedent();
+
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::_addLambertPass(domProfile_COMMON::domTechnique::domLambertRef  lambertRef, Ogre::Pass* pOgrePass )
+{
+    indent();
+    logMessage("Lambert");
+
+    domCommon_color_or_texture_typeRef typeRef;
+
+
+    // ambient component
+    typeRef = lambertRef->getAmbient();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()));
+    }
+
+    // diffuse component : color or texture
+    typeRef = lambertRef->getDiffuse();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()));
+    }
+    else if(typeRef->getTexture())
+    {
+        convertTexture(typeRef->getTexture(), pOgrePass);
+    }
+
+
+    //// specular        
+    //typeRef = lambertRef->getSpecular();
+    //if(typeRef->getColor())
+    //{
+    //    pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));
+    //    pOgrePass->setShininess(_convertDomFloatToReal(lambertRef->getShininess()));         
+    //    logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));                     
+    //}
+
+    dedent();
+
+}
+//-----------------------------------------------------------------------------
+void CMaterialConverter::_addPhongPass( domProfile_COMMON::domTechnique::domPhongRef phongRef, Ogre::Pass* pOgrePass )
+{
+    indent();
+    logMessage("Phong");
+    domCommon_color_or_texture_typeRef typeRef;
+
+
+    // ambient component
+    typeRef = phongRef->getAmbient();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()));
+    }
+    else if(typeRef->getTexture())
+    {
+        convertTexture(typeRef->getTexture(), pOgrePass);
+    }
+
+
+    // diffuse : color or texture
+    typeRef = phongRef->getDiffuse();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
+        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()));
+    } 
+    else if(typeRef->getTexture())
+    { 
+        convertTexture(typeRef->getTexture(), pOgrePass);
+    }
+
+    //// specular
+    //typeRef = phongRef->getSpecular();
+    //if(typeRef->getColor())
+    //{
+    //    pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));          
+    //    pOgrePass->setShininess(_convertDomFloatToReal(phongRef->getShininess()));                             
+    //    logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));
+    //}
+    dedent();
 }
 //-----------------------------------------------------------------------------
 void CMaterialConverter::convertTexture(const domCommon_color_or_texture_type_complexType::domTextureRef textureRef, Ogre::Pass* pOgrePass)
@@ -269,84 +402,7 @@ Ogre::ColourValue CMaterialConverter::_convertDomColorToColourValue(domCommon_co
                             ,_colorRef->getValue()[2]
                             ,_colorRef->getValue()[3]);
 }
-//-----------------------------------------------------------------------------
-void CMaterialConverter::_addBlinnPass(domProfile_COMMON::domTechnique::domBlinnRef blinnRef, Ogre::Pass* pOgrePass )
-{
-    indent();
-    logMessage("Blinn");
 
-    domCommon_color_or_texture_typeRef typeRef;
-
-    // ambient component
-    typeRef = blinnRef->getAmbient();
-    if(typeRef->getColor())
-    {
-
-        pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
-        logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()));
-    }
-
-    // diffuse component : color or texture
-    typeRef = blinnRef->getDiffuse();
-    if(typeRef->getColor())
-    {
-        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
-        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()));
-    }
-    else if(typeRef->getTexture())
-    {
-        convertTexture(typeRef->getTexture(), pOgrePass);
-    }
-
-    // specular        
-    typeRef = blinnRef->getSpecular();
-    if(typeRef->getColor())
-    {
-        pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));
-        pOgrePass->setShininess(_convertDomFloatToReal(blinnRef->getShininess()));         
-        logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));                     
-    }
-
-    dedent();
-
-}
-//-----------------------------------------------------------------------------
-void CMaterialConverter::_addPhongPass( domProfile_COMMON::domTechnique::domPhongRef phongRef, Ogre::Pass* pOgrePass )
-{
-    indent();
-    logMessage("Phong");
-    domCommon_color_or_texture_typeRef typeRef;
-
-    // ambient component
-    typeRef = phongRef->getAmbient();
-    pOgrePass->setShadingMode(Ogre::SO_PHONG);
-    if(typeRef->getColor())
-    {
-        pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
-        logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()));
-    }
-    // diffuse : color or texture
-    typeRef = phongRef->getDiffuse();
-    if(typeRef->getColor())
-    {
-        pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
-        logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()));
-    } 
-    else if(typeRef->getTexture())
-    { 
-        convertTexture(typeRef->getTexture(), pOgrePass);
-    }
-
-    // specular
-    typeRef = phongRef->getSpecular();
-    if(typeRef->getColor())
-    {
-        pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));          
-        pOgrePass->setShininess(_convertDomFloatToReal(phongRef->getShininess()));                             
-        logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));
-    }
-    dedent();
-}
 //-----------------------------------------------------------------------------
 void CMaterialConverter::_add2DTexturePass( domFx_surface_commonRef surfaceRef, domFx_sampler2D_commonRef _sampler2dRef, Ogre::Pass* pOgrePass )
 {

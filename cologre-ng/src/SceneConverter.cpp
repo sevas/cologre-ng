@@ -281,6 +281,7 @@ void CSceneConverter::_bindMaterialsToMesh( domBind_materialRef bindMaterialRef,
                 daeString materialName = instanceMaterialArray.get(j)->getTarget().getElement()->getID();
                 logMessage(utility::toString("Binding material ", std::string(materialName), " to submesh ",  ogreMesh->getName(), "[", j,"]" ));
                 pSubMesh->setMaterialName(materialName);
+                //pSubMesh->setMaterialName("Dae/Gray");
             } 
             else
                 logMessage(utility::toString("[Warning] SubMesh ", instanceMaterialArray.get(j)->getSymbol(), " not found in mesh ", ogreMesh->getName()));

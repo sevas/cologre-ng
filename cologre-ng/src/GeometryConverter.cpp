@@ -219,67 +219,86 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
 
     //at this point, there should be an equal number of data for each element if devided by stride
     unsigned int vertexCount = pIM->m_positions.data.size() / pIM->m_positions.stride;
-    Ogre::Vector3 vec3;
     for(unsigned int i = 0; i < vertexCount; ++i)
     {
-        //assuming for now that position data is always vec3
-        vec3.x = pIM->m_positions.data[i * pIM->m_positions.stride];
-        vec3.y = pIM->m_positions.data[i * pIM->m_positions.stride + 1];
-        vec3.z = pIM->m_positions.data[i * pIM->m_positions.stride + 2];
-        if(m_zUp)
-            vec3 = flipAxes(&vec3);
-        aaBB.merge(vec3);
-
-        *pData = vec3.x;
-        ++pData;
-        *pData = vec3.y;
-        ++pData;
-        *pData = vec3.z;
-        ++pData;
-
-        if(pIM->m_normals.data.size())
+        // copy position data
         {
-            vec3.x = pIM->m_normals.data[i * pIM->m_normals.stride];
-            vec3.y = pIM->m_normals.data[i * pIM->m_normals.stride + 1];
-            vec3.z = pIM->m_normals.data[i * pIM->m_normals.stride + 2];
+            Ogre::Vector3 pos;
+            //assuming for now that position data is always vec3
+            pos.x = pIM->m_positions.data[i * pIM->m_positions.stride];
+            pos.y = pIM->m_positions.data[i * pIM->m_positions.stride + 1];
+            pos.z = pIM->m_positions.data[i * pIM->m_positions.stride + 2];
             if(m_zUp)
-                vec3 = flipAxes(&vec3);
+                pos = flipAxes(&pos);
+            aaBB.merge(pos);
 
-            *pData = vec3.x;
+            *pData = pos.x;
             ++pData;
-            *pData = vec3.y;
+            *pData = pos.y;
             ++pData;
-            *pData = vec3.z;
+            *pData = pos.z;
             ++pData;
         }
 
+        // copy normal data
+        if(pIM->m_normals.data.size())
+        {
+            Ogre::Vector3 normal;            
+
+            normal.x = pIM->m_normals.data[i * pIM->m_normals.stride];
+            normal.y = pIM->m_normals.data[i * pIM->m_normals.stride + 1];
+            normal.z = pIM->m_normals.data[i * pIM->m_normals.stride + 2];
+            if(m_zUp)
+                normal = flipAxes(&normal);
+
+            *pData = normal.x;
+            ++pData;
+            *pData = normal.y;
+            ++pData;
+            *pData = normal.z;
+            ++pData;
+        }
+        else
+        {
+            logMessage(utility::toString("No normal data found in mesh", pIM->m_meshName));
+        }
+
+        // copy texcoords data
         if(pIM->m_texCoords.data.size())
         {
-            vec3.x = pIM->m_texCoords.data[i * pIM->m_texCoords.stride];
-            vec3.y = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 1];
+            Ogre::Vector3 tc;
+
+            tc.x = pIM->m_texCoords.data[i * pIM->m_texCoords.stride];
+            tc.y = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 1];
             if(pIM->m_texCoords.stride > 2)
-                vec3.z = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 2];
+                tc.z = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 2];
 
             if(m_convOptions.flipTextureH == true)
-                vec3.y = 1.0 - vec3.y;
+                tc.y = 1.0 - tc.y;
             if(m_convOptions.flipTextureV == true)
-                vec3.x = 1.0 - vec3.x;
+                tc.x = 1.0 - tc.x;
 
-            *pData = vec3.x;
+            *pData = tc.x;
             ++pData;
-            *pData = vec3.y;
+            *pData = tc.y;
             ++pData;
             if(pIM->m_texCoords.stride > 2)
             {
-                *pData = vec3.z;
+                *pData = tc.z;
                 ++pData;
             }
         }
+        else
+        {
+            logMessage(utility::toString("No texcoord data found in mesh", pIM->m_meshName));
+        }
+
+
     }
     vertexBuffer->unlock();
     pOgreMesh->sharedVertexData->vertexBufferBinding->setBinding(0, vertexBuffer);
     pOgreMesh->sharedVertexData->vertexCount = pIM->m_positions.data.size() / pIM->m_positions.stride;
-    aaBB.scale(Ogre::Vector3(2.0f, 2.0f, 2.0f));
+    //aaBB.scale(Ogre::Vector3(2.0f, 2.0f, 2.0f));
     pOgreMesh->_setBounds(aaBB);
 
     int totalIndexCount = 0;
