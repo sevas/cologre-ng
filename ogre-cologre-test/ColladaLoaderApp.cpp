@@ -22,6 +22,8 @@ void ColladaLoaderApp::createScene()
     //ret = mColladaDatabase.load("../../media/plane.DAE");
     ret = mColladaDatabase.load("../../media/Dining_Room/diningroomC.dae");
     //ret = mColladaDatabase.load("../../media/plane_box_light.dae");
+    //ret = mColladaDatabase.load("../../media/shapes.dae");
+    //ret = mColladaDatabase.load("../../media/operalyon_3_tris.dae");
     assert(ret == 0);              
 
     mColladaDatabase.convertResources();
@@ -29,7 +31,7 @@ void ColladaLoaderApp::createScene()
 
     Ogre::SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode("collada stuff");
     mColladaDatabase.convertScene(mSceneMgr, node);
-    //node->scale(100, 100, 100);
+    //node->scaleq(10, 10, 10);
 }
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::createGrid(int _units){
@@ -40,9 +42,13 @@ void ColladaLoaderApp::createLight()
 {
     Ogre::SceneNode *lightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("light node", Vector3(300, 300, 300));
     Light *light = mSceneMgr->createLight("light");
+
+    light->setSpecularColour(Ogre::ColourValue::White);
     Ogre::BillboardSet *bbset = mSceneMgr->createBillboardSet("light billboard");
     bbset->setMaterialName("Objects/Flare");
     Ogre::Billboard *flare = bbset->createBillboard(Vector3::ZERO);
+
+
 
     lightNode->attachObject(light);                                      
     lightNode->attachObject(bbset);

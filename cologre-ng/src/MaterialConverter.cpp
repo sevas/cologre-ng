@@ -146,9 +146,10 @@ void CMaterialConverter::_addBlinnPass(domProfile_COMMON::domTechnique::domBlinn
     if(typeRef->getColor())
     {
         pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));
-        pOgrePass->setShininess(_convertDomFloatToReal(blinnRef->getShininess()));         
+        pOgrePass->setShininess(_convertDomFloatToReal(blinnRef->getShininess()));  
         logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));                     
     }
+
 
     dedent();
 
@@ -182,15 +183,6 @@ void CMaterialConverter::_addLambertPass(domProfile_COMMON::domTechnique::domLam
         convertTexture(typeRef->getTexture(), pOgrePass);
     }
 
-
-    //// specular        
-    //typeRef = lambertRef->getSpecular();
-    //if(typeRef->getColor())
-    //{
-    //    pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));
-    //    pOgrePass->setShininess(_convertDomFloatToReal(lambertRef->getShininess()));         
-    //    logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));                     
-    //}
 
     dedent();
 
@@ -229,13 +221,15 @@ void CMaterialConverter::_addPhongPass( domProfile_COMMON::domTechnique::domPhon
     }
 
     //// specular
-    //typeRef = phongRef->getSpecular();
-    //if(typeRef->getColor())
-    //{
-    //    pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));          
-    //    pOgrePass->setShininess(_convertDomFloatToReal(phongRef->getShininess()));                             
-    //    logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));
-    //}
+    typeRef = phongRef->getSpecular();
+    if(typeRef->getColor())
+    {
+        pOgrePass->setSpecular(_convertDomColorToColourValue(typeRef->getColor()));          
+        pOgrePass->setShininess(_convertDomFloatToReal(phongRef->getShininess()));        
+                     
+        logMessage(utility::toString("Specular : ", pOgrePass->getSpecular(), "[shininess=", pOgrePass->getShininess(), "]"));
+    }
+ 
     dedent();
 }
 //-----------------------------------------------------------------------------

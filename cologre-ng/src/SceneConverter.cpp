@@ -145,6 +145,21 @@ void CSceneConverter::transformNode(domNode* pDomNode, Ogre::Node *pOgreNode)
             ogreQuatRotation = ogreQuatRotation * Ogre::Quaternion(Ogre::Radian(Ogre::Degree(rotateAA.get(3))), ogreVecRot);
     }
 
+
+
+    // accumulate scaling factors
+    Ogre::Vector3 ogreVecScale(1.0f, 1.0f, 1.0f);
+    for(unsigned int i=0 ; i<pDomNode->getScale_array().getCount() ; ++i)
+    {
+        domScaleRef scaleRef = pDomNode->getScale_array().get(i);
+        domFloat3 scaleVec = scaleRef->getValue();
+
+        Ogre::Vector3 currentScale(scaleVec.get(0), scaleVec.get(1), scaleVec.get(2));
+        ogreVecScale *= currentScale;
+
+    }
+
+
     //now check if transforms are in matrix form rather then AA-Rotations and Vector translations 
     for(unsigned int i = 0; i < pDomNode->getMatrix_array().getCount(); ++i)
     {
@@ -171,6 +186,7 @@ void CSceneConverter::transformNode(domNode* pDomNode, Ogre::Node *pOgreNode)
     pOgreNode->rotate(quat.Inverse() * ogreQuatRotation);
     Ogre::Vector3 vec = pOgreNode->getPosition();
     pOgreNode->translate(ogreVecTranslation - vec);
+    pOgreNode->setScale(ogreVecScale);
     pOgreNode->setInitialState();
 }
 //------------------------------------------------------------------------------
@@ -187,6 +203,7 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
         pOgreLight->setVisible(true);
         domTargetableFloat3Ref colorRef = pointRef->getColor();
         pOgreLight->setDiffuseColour(colorRef->getValue().get(0), colorRef->getValue().get(1), colorRef->getValue().get(2));
+        pOgreLight->setSpecularColour(colorRef->getValue().get(0), colorRef->getValue().get(1), colorRef->getValue().get(2));
 
         int attenuationType = 0;
         float attenuationRange = 100.0f;
