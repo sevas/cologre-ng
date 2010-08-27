@@ -7,10 +7,11 @@
 #include "../utility/Utility.h"
 
 namespace cologreng{
+
+unsigned int CSceneConverter::sGenericNodeID = 0;
 //------------------------------------------------------------------------------
 CSceneConverter::CSceneConverter(Ogre::Log *_log)
     :HasLog(_log)
-    ,mGenericNodeID(0)
 {
     m_hasLight = false;
 }
@@ -366,7 +367,7 @@ void CSceneConverter::_instantiateGeometry( domNodeRef &nodeRef, Ogre::SceneNode
             }
 
             //create the scene entity from the mesh and attach it to the transformed scene node
-            Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName(), ogreMesh->getName());
+            Ogre::Entity* pEntity = pOgreSceneManager->createEntity(pSceneNode->getName()+"/entity/"+utility::toString(i), ogreMesh->getName());
             if(pEntity)
             {
                 pSceneNode->attachObject(pEntity);
@@ -524,7 +525,7 @@ void CSceneConverter::_setLightAttenuation( domLight::domTechnique_common::domPo
 //------------------------------------------------------------------------------
 std::string CSceneConverter::_makeNodeID()
 {
-    return utility::toString("Unnamed Node ", mGenericNodeID++);
+    return utility::toString("Collada Unnamed Node ", ++sGenericNodeID);
 }
 //------------------------------------------------------------------------------
 } // namespace cologreng

@@ -81,7 +81,7 @@ protected:
     /// \internal stores whether there is at least one light in the scene, if not, a default light will be added depending on CConverter::m_convOptions
     bool m_hasLight;
 
-    unsigned int mGenericNodeID;
+    static unsigned int sGenericNodeID;
 
 };
 

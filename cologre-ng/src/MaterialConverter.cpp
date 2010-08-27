@@ -165,7 +165,7 @@ void CMaterialConverter::_addLambertPass(domProfile_COMMON::domTechnique::domLam
 
     // ambient component
     typeRef = lambertRef->getAmbient();
-    if(typeRef->getColor())
+    if(typeRef && typeRef->getColor())
     {
         pOgrePass->setAmbient(_convertDomColorToColourValue(typeRef->getColor()));
         logMessage(utility::toString("Ambient : ", pOgrePass->getAmbient()));
@@ -173,12 +173,12 @@ void CMaterialConverter::_addLambertPass(domProfile_COMMON::domTechnique::domLam
 
     // diffuse component : color or texture
     typeRef = lambertRef->getDiffuse();
-    if(typeRef->getColor())
+    if(typeRef && typeRef->getColor())
     {
         pOgrePass->setDiffuse(_convertDomColorToColourValue(typeRef->getColor()));
         logMessage(utility::toString("Diffuse : ", pOgrePass->getDiffuse()));
     }
-    else if(typeRef->getTexture())
+    else if(typeRef && typeRef->getTexture())
     {
         convertTexture(typeRef->getTexture(), pOgrePass);
     }

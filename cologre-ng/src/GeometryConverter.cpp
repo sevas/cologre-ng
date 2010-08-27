@@ -59,7 +59,8 @@ int CGeometryConverter::convert(daeDatabase* pDatabase)
 //------------------------------------------------------------------------------
 conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry* pGeo, CIntermediateMesh* pIM)
 {
-    logMessage(cologreng::utility::toString("Loading mesh : ", pGeo->getName(), " to intermediate mesh"));
+    if(pGeo->getName())
+        logMessage(cologreng::utility::toString("Loading mesh : ", pGeo->getName(), " to intermediate mesh"));
 
     domMeshRef colladaMesh = pGeo->getMesh();
 
