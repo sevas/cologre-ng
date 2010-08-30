@@ -19,12 +19,12 @@ void ColladaLoaderApp::createScene()
     //exit(-1);
     //ret = mColladaDatabase.load("../../media/indochine_tris.DAE");
     //ret = mColladaDatabase.load("../../media/Ducati_Monster.dae");
-    //ret = mColladaDatabase.load("../../media/plane.DAE");
+    ret = mColladaDatabase.load("../../media/plane.DAE");
     //ret = mColladaDatabase.load("../../media/Dining_Room/diningroomC.dae");
     //ret = mColladaDatabase.load("../../media/plane_box_light.dae");
     //ret = mColladaDatabase.load("../../media/shapes.dae");
     //ret = mColladaDatabase.load("../../media/operalyon_3_tris.dae");
-    ret = mColladaDatabase.load("../../media/amphi_math_COLLADA.DAE");
+    //ret = mColladaDatabase.load("../../media/amphi_math_COLLADA.DAE");
     //ret = mColladaDatabase.load("../../media/seymour_tris.dae");
     assert(ret == 0);              
 

@@ -6,6 +6,7 @@
 #include "dom/domGeometry.h"
 
 #include <string>
+#include <utility>
 
 namespace cologreng{
 
@@ -22,6 +23,9 @@ struct IntermediateVertexData
 */
 class CGeometryConverter : public CResourceConverter
 {
+protected:
+    typedef std::pair<Ogre::HardwareVertexBufferSharedPtr, Ogre::AxisAlignedBox> VertexBufferAndAABB;
+
 public:
     ///Contructor
     CGeometryConverter(Ogre::Log *_log);
@@ -64,6 +68,13 @@ protected:
     conversion_errors loadGeometryToIntermediateMesh(domGeometry* pGeo, CIntermediateMesh* pIM);
     void addVertexWeights(domSkin* pSkin);
     void makeOgreMeshFromIntermediateMesh(CIntermediateMesh* pIM);
+
+    void _reorganizeBuffersForSkeletalAnimation( Ogre::MeshPtr pOgreMesh, CIntermediateMesh *_intermediateMesh);
+    void _createSubMeshIndexes( CIntermediateMesh * pIM, Ogre::MeshPtr pOgreMesh );
+    VertexBufferAndAABB _createVertexDataFromIntermediateMesh( Ogre::VertexDeclaration* pDecl, CIntermediateMesh * pIM);
+    void _setVertexDataSemanticsFromIntermediateMesh(Ogre::VertexDeclaration *_vertexDecl, CIntermediateMesh *_intermediateMesh);
+
+
 };
 
 } //namespace cologreng

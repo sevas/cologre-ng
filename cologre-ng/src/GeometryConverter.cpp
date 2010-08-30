@@ -1,11 +1,12 @@
 #include "cologre_ng_precompiled.h"
 #include "GeometryConverter.h"
-#include <dom/domController.h>
 
 #ifdef _DEBUG
 #include <cassert>
 #endif
+#include <sstream>
 
+#include <dom/domController.h>
 #include "../Utility/Utility.h"
 
 namespace cologreng{
@@ -37,6 +38,7 @@ int CGeometryConverter::convert(daeDatabase* pDatabase)
         domGeometry* pGeo = (domGeometry*)pElement;
         CIntermediateMesh IM;
         IM.m_meshName = pGeo->getID();
+
         //see if this mesh is a skin
         unsigned int numControllerElements = pDatabase->getElementCount(NULL, "controller", NULL);
         for(unsigned int i = 0; i < numControllerElements; i++)
@@ -49,18 +51,32 @@ int CGeometryConverter::convert(daeDatabase* pDatabase)
         }
     
         if(loadGeometryToIntermediateMesh(pGeo, &IM) == ALL_OK)
+        {
+            indent();
             makeOgreMeshFromIntermediateMesh(&IM);
-    }
+            dedent();
+        } 
+        else
+        {
+            logMessage("Error occured while converting to intermediate mesh");
+        }
 
+   }
     logMessage("\n\n\n");
-
     return 0;
 }
 //------------------------------------------------------------------------------
 conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry* pGeo, CIntermediateMesh* pIM)
 {
+    std::string meshName;
+
     if(pGeo->getName())
-        logMessage(cologreng::utility::toString("Loading mesh : ", pGeo->getName(), " to intermediate mesh"));
+        meshName = pGeo->getName();
+    else
+        meshName = pGeo->getId();
+
+    logMessage(cologreng::utility::toString("Loading mesh : ", meshName, " to intermediate mesh"));
+    HasLog::indent();
 
     domMeshRef colladaMesh = pGeo->getMesh();
 
@@ -82,6 +98,9 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
             pIM->m_vSubMeshVertexCount.push_back(trisRef->getCount() * 3);
             pIM->m_vSubMeshNames.push_back(trisRef->getMaterial());
             domInputLocalOffset_Array inputArray = trisRef->getInput_array();
+
+            logMessage(cologreng::utility::toString("Loading ", inputArray.getCount(), " vertices(s)"));
+
             for(unsigned int i = 0; i < inputArray.getCount(); i++)
             {
                 domInputLocalOffsetRef inputRef = inputArray.get(i);
@@ -149,6 +168,8 @@ conversion_errors CGeometryConverter::loadGeometryToIntermediateMesh(domGeometry
         }
     }
 
+    HasLog::dedent();
+
     return ALL_OK;
 }
 //------------------------------------------------------------------------------
@@ -186,49 +207,96 @@ void CGeometryConverter::addVertexWeights(domSkin *pSkin)
 //------------------------------------------------------------------------------
 void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM)
 {
-    cologreng::utility::toString("Making Ogre mesh from intermediate mesh : "
-                                , pIM->m_meshName
-                                , " [#submeshes : " , pIM->m_subMeshCount
-                                , " #vertices : " , pIM->m_positions.data.size()
-                                , " #normals : " , pIM->m_normals.data.size()
-                                ,  "]");
+    logMessage(cologreng::utility::toString(
+        "Making Ogre mesh from intermediate mesh : "
+        , pIM->m_meshName
+        , " [#submeshes : " , pIM->m_subMeshCount
+        , " #vertices : " , pIM->m_positions.data.size()
+        , " #normals : " , pIM->m_normals.data.size()
+        ,  "]"));
+
+    HasLog::indent();
     
+
     Ogre::MeshPtr pOgreMesh = Ogre::MeshManager::getSingleton().createManual(pIM->m_meshName, "DaeCustom");
+    
+
     pOgreMesh->sharedVertexData = new Ogre::VertexData();
     Ogre::VertexDeclaration* pDecl = pOgreMesh->sharedVertexData->vertexDeclaration;
+    _setVertexDataSemanticsFromIntermediateMesh(pDecl, pIM);          
+
+    VertexBufferAndAABB vertexBufferAndAABB;
+    vertexBufferAndAABB = _createVertexDataFromIntermediateMesh(pDecl, pIM);
+
+    pOgreMesh->sharedVertexData->vertexBufferBinding->setBinding(0, vertexBufferAndAABB.first);
+    pOgreMesh->sharedVertexData->vertexCount = pIM->m_positions.data.size() / pIM->m_positions.stride;
+    pOgreMesh->_setBounds(vertexBufferAndAABB.second);
+
+    _createSubMeshIndexes(pIM, pOgreMesh);
+
+    if(pIM->m_vertexWeights.size())
+    {
+        _reorganizeBuffersForSkeletalAnimation(pOgreMesh, pIM);
+    }
+
+    pOgreMesh->load();
+
+    HasLog::dedent();
+
+    return;
+}
+//------------------------------------------------------------------------------
+void CGeometryConverter::_setVertexDataSemanticsFromIntermediateMesh(Ogre::VertexDeclaration *_vertexDecl, CIntermediateMesh *_intermediateMesh)
+{
+    logMessage("Setting vertex data semantics : ");
+    indent();
+    if(_intermediateMesh->m_positions.data.size())
+    {
+        size_t offset = _vertexDecl->getVertexSize(0);
+        _vertexDecl->addElement(0, offset, static_cast<Ogre::VertexElementType>(_intermediateMesh->m_positions.stride - 1), Ogre::VES_POSITION);
+        logMessage("Has Ogre::VES_POSITION");
+    }
+    if(_intermediateMesh->m_normals.data.size())
+    {
+        size_t offset = _vertexDecl->getVertexSize(0);
+        _vertexDecl->addElement(0, offset, static_cast<Ogre::VertexElementType>(_intermediateMesh->m_normals.stride - 1), Ogre::VES_NORMAL);
+        logMessage("Has Ogre::VES_NORMAL");
+    }
+    if(_intermediateMesh->m_texCoords.data.size())
+    {
+        size_t offset = _vertexDecl->getVertexSize(0);
+        _vertexDecl->addElement(0, offset, static_cast<Ogre::VertexElementType>(_intermediateMesh->m_texCoords.stride - 1), Ogre::VES_TEXTURE_COORDINATES);
+        logMessage("Has Ogre::VES_TEXTURE_COORDINATES");
+    }
+    dedent();
+}
+//------------------------------------------------------------------------------
+CGeometryConverter::VertexBufferAndAABB CGeometryConverter::_createVertexDataFromIntermediateMesh( 
+    Ogre::VertexDeclaration* _vertexDecl, 
+    CIntermediateMesh * _intermediateMesh)
+{
+    Ogre::HardwareVertexBufferSharedPtr vertexBuffer = 
+        Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+            _vertexDecl->getVertexSize(0)
+            , _intermediateMesh->m_positions.data.size() / _intermediateMesh->m_positions.stride
+            , Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+
     Ogre::AxisAlignedBox aaBB;
 
-    if(pIM->m_positions.data.size())
-    {
-        size_t offset = pDecl->getVertexSize(0);
-        pDecl->addElement(0, offset, static_cast<Ogre::VertexElementType>(pIM->m_positions.stride - 1), Ogre::VES_POSITION);
-    }
-    if(pIM->m_normals.data.size())
-    {
-        size_t offset = pDecl->getVertexSize(0);
-        pDecl->addElement(0, offset, static_cast<Ogre::VertexElementType>(pIM->m_normals.stride - 1), Ogre::VES_NORMAL);
-    }
-    if(pIM->m_texCoords.data.size())
-    {
-        size_t offset = pDecl->getVertexSize(0);
-        pDecl->addElement(0, offset, static_cast<Ogre::VertexElementType>(pIM->m_texCoords.stride - 1), Ogre::VES_TEXTURE_COORDINATES);
-    }
-    Ogre::HardwareVertexBufferSharedPtr vertexBuffer = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(pDecl->getVertexSize(0),
-        pIM->m_positions.data.size() / pIM->m_positions.stride,
-        Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-    float* pData = static_cast<float*>(vertexBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
 
+    float* pData = static_cast<float*>(vertexBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
     //at this point, there should be an equal number of data for each element if devided by stride
-    unsigned int vertexCount = pIM->m_positions.data.size() / pIM->m_positions.stride;
+    unsigned int vertexCount = _intermediateMesh->m_positions.data.size() / _intermediateMesh->m_positions.stride;
+    logMessage(utility::toString("Copying vertexdata (", vertexCount, " vertices)"));
     for(unsigned int i = 0; i < vertexCount; ++i)
     {
         // copy position data
         {
             Ogre::Vector3 pos;
             //assuming for now that position data is always vec3
-            pos.x = pIM->m_positions.data[i * pIM->m_positions.stride];
-            pos.y = pIM->m_positions.data[i * pIM->m_positions.stride + 1];
-            pos.z = pIM->m_positions.data[i * pIM->m_positions.stride + 2];
+            pos.x = _intermediateMesh->m_positions.data[i * _intermediateMesh->m_positions.stride];
+            pos.y = _intermediateMesh->m_positions.data[i * _intermediateMesh->m_positions.stride + 1];
+            pos.z = _intermediateMesh->m_positions.data[i * _intermediateMesh->m_positions.stride + 2];
             if(m_zUp)
                 pos = flipAxes(&pos);
             aaBB.merge(pos);
@@ -242,13 +310,13 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
         }
 
         // copy normal data
-        if(pIM->m_normals.data.size())
+        if(_intermediateMesh->m_normals.data.size())
         {
             Ogre::Vector3 normal;            
 
-            normal.x = pIM->m_normals.data[i * pIM->m_normals.stride];
-            normal.y = pIM->m_normals.data[i * pIM->m_normals.stride + 1];
-            normal.z = pIM->m_normals.data[i * pIM->m_normals.stride + 2];
+            normal.x = _intermediateMesh->m_normals.data[i * _intermediateMesh->m_normals.stride];
+            normal.y = _intermediateMesh->m_normals.data[i * _intermediateMesh->m_normals.stride + 1];
+            normal.z = _intermediateMesh->m_normals.data[i * _intermediateMesh->m_normals.stride + 2];
             if(m_zUp)
                 normal = flipAxes(&normal);
 
@@ -261,18 +329,18 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
         }
         else
         {
-            logMessage(utility::toString("No normal data found in mesh", pIM->m_meshName));
+            logMessage(utility::toString("No normal data found in mesh", _intermediateMesh->m_meshName));
         }
 
         // copy texcoords data
-        if(pIM->m_texCoords.data.size())
+        if(_intermediateMesh->m_texCoords.data.size())
         {
             Ogre::Vector3 tc;
 
-            tc.x = pIM->m_texCoords.data[i * pIM->m_texCoords.stride];
-            tc.y = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 1];
-            if(pIM->m_texCoords.stride > 2)
-                tc.z = pIM->m_texCoords.data[i * pIM->m_texCoords.stride + 2];
+            tc.x = _intermediateMesh->m_texCoords.data[i * _intermediateMesh->m_texCoords.stride];
+            tc.y = _intermediateMesh->m_texCoords.data[i * _intermediateMesh->m_texCoords.stride + 1];
+            if(_intermediateMesh->m_texCoords.stride > 2)
+                tc.z = _intermediateMesh->m_texCoords.data[i * _intermediateMesh->m_texCoords.stride + 2];
 
             if(m_convOptions.flipTextureH == true)
                 tc.y = 1.0 - tc.y;
@@ -283,7 +351,7 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
             ++pData;
             *pData = tc.y;
             ++pData;
-            if(pIM->m_texCoords.stride > 2)
+            if(_intermediateMesh->m_texCoords.stride > 2)
             {
                 *pData = tc.z;
                 ++pData;
@@ -291,63 +359,13 @@ void CGeometryConverter::makeOgreMeshFromIntermediateMesh(CIntermediateMesh *pIM
         }
         else
         {
-            logMessage(utility::toString("No texcoord data found in mesh", pIM->m_meshName));
+            logMessage(utility::toString("No texcoord data found in mesh", _intermediateMesh->m_meshName));
         }
 
 
     }
     vertexBuffer->unlock();
-    pOgreMesh->sharedVertexData->vertexBufferBinding->setBinding(0, vertexBuffer);
-    pOgreMesh->sharedVertexData->vertexCount = pIM->m_positions.data.size() / pIM->m_positions.stride;
-    //aaBB.scale(Ogre::Vector3(2.0f, 2.0f, 2.0f));
-    pOgreMesh->_setBounds(aaBB);
-
-    int totalIndexCount = 0;
-    for(unsigned int i = 0; i < pIM->m_subMeshCount; ++i)
-    {
-        logMessage(utility::toString("Adding submesh ", i, " to ", pOgreMesh->getName(), " : ", pIM->m_vSubMeshNames[i]));
-
-        Ogre::SubMesh* pSubMesh = pOgreMesh->createSubMesh(pIM->m_vSubMeshNames[i]);
-        pSubMesh->indexData->indexCount = pIM->m_vSubMeshVertexCount[i];
-        pSubMesh->indexData->indexStart = 0;
-        pSubMesh->useSharedVertices = true;
-        pSubMesh->indexData->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, 
-            pSubMesh->indexData->indexCount, 
-            Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY); 
-        Ogre::uint16* idata = static_cast<Ogre::uint16*>(pSubMesh->indexData->indexBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD)); 
-        for(unsigned int j = 0; j < pSubMesh->indexData->indexCount; ++j)
-        {
-            *idata = j + totalIndexCount;
-            ++idata;
-        }
-        totalIndexCount += pIM->m_vSubMeshVertexCount[i];
-        pSubMesh->indexData->indexBuffer->unlock();
-    }
-
-    if(pIM->m_vertexWeights.size())
-    {
-        //reorganize buffers for skeletal animation
-        Ogre::VertexDeclaration* pOrganizedVD = pOgreMesh->sharedVertexData->vertexDeclaration->getAutoOrganisedDeclaration(true, false);
-        int maxSource = pOrganizedVD->getMaxSource();
-        Ogre::BufferUsageList bul;
-        for(int i = 0; i < maxSource + 1; ++i)
-            bul.push_back(Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-        pOgreMesh->sharedVertexData->reorganiseBuffers(pOrganizedVD, bul); 
-
-        for(unsigned int i = 0; i < pIM->m_vertexWeights.size(); ++i)
-        {
-            for(unsigned int j = 0; j < pIM->m_vertexWeights[i].boneIndices.size(); ++j)
-            {
-                Ogre::VertexBoneAssignment VBA;
-                VBA.vertexIndex = i;
-                VBA.boneIndex = pIM->m_vertexWeights[i].boneIndices[j];
-                VBA.weight = pIM->m_vertexWeights[i].weights[j];
-                pOgreMesh->addBoneAssignment(VBA);
-            }
-        }
-    }
-    pOgreMesh->load();
-    return;
+    return VertexBufferAndAABB(vertexBuffer, aaBB);;
 }
 //------------------------------------------------------------------------------
 void CGeometryConverter::buildVertexDeclFromInputArray(const daeElementRef elemRef, Ogre::MeshPtr pOgreMesh)
@@ -497,5 +515,55 @@ void CGeometryConverter::copyData(domPRef pRef, const std::vector<domSource*> &v
     }
 }
 //------------------------------------------------------------------------------
+void CGeometryConverter::_createSubMeshIndexes( CIntermediateMesh * pIM, Ogre::MeshPtr pOgreMesh )
+{
+    logMessage(utility::toString("Creating ", pIM->m_subMeshCount, " submeshes"));
+    int totalIndexCount = 0;
+    for(unsigned int i = 0; i < pIM->m_subMeshCount; ++i)
+    {
+        logMessage(utility::toString("Adding submesh ", i, " to ", pOgreMesh->getName(), " : ", pIM->m_vSubMeshNames[i]));
+
+        Ogre::SubMesh* pSubMesh = pOgreMesh->createSubMesh(pIM->m_vSubMeshNames[i]);
+        pSubMesh->indexData->indexCount = pIM->m_vSubMeshVertexCount[i];
+        pSubMesh->indexData->indexStart = 0;
+        pSubMesh->useSharedVertices = true;
+        pSubMesh->indexData->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, 
+            pSubMesh->indexData->indexCount, 
+            Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY); 
+        Ogre::uint16* idata = static_cast<Ogre::uint16*>(pSubMesh->indexData->indexBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD)); 
+        for(unsigned int j = 0; j < pSubMesh->indexData->indexCount; ++j)
+        {
+            *idata = j + totalIndexCount;
+            ++idata;
+        }
+        totalIndexCount += pIM->m_vSubMeshVertexCount[i];
+        pSubMesh->indexData->indexBuffer->unlock();
+    }
+}
+//------------------------------------------------------------------------------
+void CGeometryConverter::_reorganizeBuffersForSkeletalAnimation( Ogre::MeshPtr pOgreMesh, CIntermediateMesh *_intermediateMesh )
+{
+    logMessage("Reorganizing buffers for skeletal animation");
+    Ogre::VertexDeclaration* pOrganizedVD = pOgreMesh->sharedVertexData->vertexDeclaration->getAutoOrganisedDeclaration(true, false);
+    int maxSource = pOrganizedVD->getMaxSource();
+    Ogre::BufferUsageList bul;
+    for(int i = 0; i < maxSource + 1; ++i)
+        bul.push_back(Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+    pOgreMesh->sharedVertexData->reorganiseBuffers(pOrganizedVD, bul); 
+
+    for(unsigned int i = 0; i < _intermediateMesh->m_vertexWeights.size(); ++i)
+    {
+        for(unsigned int j = 0; j < _intermediateMesh->m_vertexWeights[i].boneIndices.size(); ++j)
+        {
+            Ogre::VertexBoneAssignment VBA;
+            VBA.vertexIndex = i;
+            VBA.boneIndex = _intermediateMesh->m_vertexWeights[i].boneIndices[j];
+            VBA.weight = _intermediateMesh->m_vertexWeights[i].weights[j];
+            pOgreMesh->addBoneAssignment(VBA);
+        }
+    }
+}
+//------------------------------------------------------------------------------
 
 } // namespace cologreng
+
