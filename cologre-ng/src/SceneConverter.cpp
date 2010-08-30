@@ -12,6 +12,8 @@ unsigned int CSceneConverter::sGenericNodeID = 0;
 //------------------------------------------------------------------------------
 CSceneConverter::CSceneConverter(Ogre::Log *_log)
     :HasLog(_log)
+    ,mMaterialMode(USE_FILE_MATERIAL)
+    ,mShowLights(SHOW_LIGHT_BILLBOARD)
 {
     m_hasLight = false;
 }
@@ -20,15 +22,18 @@ CSceneConverter::~CSceneConverter()
 {
 }
 //------------------------------------------------------------------------------
-int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode)
+int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode, LightBillBoardMode _bbMode, MaterialMode _materialMode)
 {
-    logMessage("Converting scene");
-    logMessage("-------------------------------------------------");
-
 #ifdef _DEBUG
     assert(pOgreSceneManager);
     assert(pParentNode);
 #endif
+
+    mShowLights = _bbMode;
+    mMaterialMode = _materialMode;
+
+    logMessage("Converting scene");
+    logMessage("-------------------------------------------------");
 
     Ogre::SceneNode* pRootNode = pParentNode;
     domCOLLADA::domScene* pScene = (domCOLLADA::domScene*)pElement;
@@ -45,7 +50,7 @@ int CSceneConverter::convert(daeElement* pElement, Ogre::SceneManager* pOgreScen
 
     if(!m_hasLight && CConverter::m_convOptions.addDefaultLight == true)
     {
-        //_createDefaultLight(pOgreSceneManager);
+        _createDefaultLight(pOgreSceneManager);
     }
     return 0;
 }
@@ -105,7 +110,7 @@ void CSceneConverter::buildSceneHierarchy(domNode_Array *pNodeArray, Ogre::Scene
 
             _instantiateGeometry(nodeRef, pSceneNode, pOgreSceneManager);
             //_instantiateSkeletons(nodeRef, pOgreSceneManager, pSceneNode);
-            _instantiateLights(nodeRef, pOgreSceneManager, pSceneNode, true);
+            _instantiateLights(nodeRef, pOgreSceneManager, pSceneNode);
 
             // recursive call
             domNode_Array nodeArray = nodeRef->getNode_array();
@@ -206,12 +211,14 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
         pOgreLight->setDiffuseColour(colorRef->getValue().get(0), colorRef->getValue().get(1), colorRef->getValue().get(2));
         pOgreLight->setSpecularColour(colorRef->getValue().get(0), colorRef->getValue().get(1), colorRef->getValue().get(2));
 
-        int attenuationType = 0;
+
+
         float attenuationRange = 100.0f;
 
         domExtra_Array extraArray = pLight->getExtra_array();
         if(extraArray.getCount())
         {
+            logMessage("Getting extra parameters");
             for(unsigned int i = 0; i < extraArray.getCount(); ++i)
             {
                 domExtraRef extraRef = extraArray.get(i);
@@ -220,6 +227,9 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
                     domTechniqueRef techniqueRef = extraRef->getTechnique_array().get(j);
                     if(techniqueRef->getProfile() == std::string("MAX3D"))
                     {
+                        logMessage("MAX3D parameters");
+                        int attenuationType = 0;
+
                         daeElementRefArray& contentsArray = techniqueRef->getContents();
                         for(unsigned int k = 0; k < contentsArray.getCount(); ++k)
                         {
@@ -230,6 +240,7 @@ Ogre::Light* CSceneConverter::convertLight(domLight *pLight, Ogre::SceneManager 
                             else if(name == "far_attenuation_end")
                                 attenuationRange = static_cast<float>(atof(pAny.getValue()));
                         }
+
                         switch(attenuationType)
                         {
                         case 0:
@@ -296,10 +307,15 @@ void CSceneConverter::_bindMaterialsToMesh( domBind_materialRef bindMaterialRef,
             Ogre::SubMesh* pSubMesh = ogreMesh->getSubMesh(instanceMaterialArray.get(j)->getSymbol());
             if(pSubMesh)
             {
-                daeString materialName = instanceMaterialArray.get(j)->getTarget().getElement()->getID();
-                logMessage(utility::toString("Binding material ", std::string(materialName), " to submesh ",  ogreMesh->getName(), "[", j,"]" ));
-                pSubMesh->setMaterialName(materialName);
-                //pSubMesh->setMaterialName("Dae/Gray");
+                if(mMaterialMode == USE_FILE_MATERIAL)
+                {
+                    daeString materialName = instanceMaterialArray.get(j)->getTarget().getElement()->getID();
+                    _setSubmeshMaterial(pSubMesh, materialName, ogreMesh->getName(), j);
+                }
+                else if(mMaterialMode == USE_GENERIC_MATERIAL)
+                {
+                    _setSubmeshMaterial(pSubMesh, "Dae/Blue", ogreMesh->getName(), j);
+                }
             } 
             else
                 logMessage(utility::toString("[Warning] SubMesh ", instanceMaterialArray.get(j)->getSymbol(), " not found in mesh ", ogreMesh->getName()));
@@ -307,13 +323,21 @@ void CSceneConverter::_bindMaterialsToMesh( domBind_materialRef bindMaterialRef,
     }
 }
 //------------------------------------------------------------------------------
-void CSceneConverter::_instantiateLights( domNodeRef &nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode, bool _addBillboard )
+void CSceneConverter::_setSubmeshMaterial(Ogre::SubMesh *_subMesh, const std::string &_materialName, const std::string &_meshName, unsigned int _submeshIndex)
+{
+    logMessage(utility::toString("Binding material ", _materialName, " to submesh ",  _meshName, "[", _submeshIndex,"]" ));                    
+    _subMesh->setMaterialName(_materialName);                        
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_instantiateLights( domNodeRef &nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode )
 {
     //create scene instances from lights
     domInstance_light_Array instanceLightArray = nodeRef->getInstance_light_array();
 
     if(instanceLightArray.getCount() > 0)
         logMessage("Instantiating lights");
+    else
+        logMessage("No light instance found");
 
    for(unsigned int i = 0; i < instanceLightArray.getCount(); ++i)
     {
@@ -325,19 +349,24 @@ void CSceneConverter::_instantiateLights( domNodeRef &nodeRef, Ogre::SceneManage
         Ogre::Light* pOgreLight = convertLight(pLight, pOgreSceneManager);
         if(pOgreLight)
         {
-            m_hasLight = true;
-            pSceneNode->attachObject(pOgreLight);
-
-            Ogre::BillboardSet *bbset = pOgreSceneManager->createBillboardSet(pOgreLight->getName() + "flare");
-            bbset->setMaterialName("Objects/Flare");
-            bbset->createBillboard(Ogre::Vector3::ZERO);
-            pSceneNode->attachObject(bbset);
-
-
+            _addLightToScene(pOgreLight, pSceneNode, pOgreSceneManager);
             transformNode(nodeRef.cast(), pSceneNode);
         }
     }
-    logMessage("");
+}
+//------------------------------------------------------------------------------
+void CSceneConverter::_addLightToScene(Ogre::Light *_light, Ogre::SceneNode *_node, Ogre::SceneManager *_sceneMgr)
+{
+    m_hasLight = true;
+    _node->attachObject(_light);
+
+    if(mShowLights == SHOW_LIGHT_BILLBOARD)
+    {
+        Ogre::BillboardSet *bbset = _sceneMgr->createBillboardSet(_light->getName() + "flare");
+        bbset->setMaterialName("Objects/Flare");
+        bbset->createBillboard(Ogre::Vector3::ZERO);
+        _node->attachObject(bbset);
+    }
 }
 //------------------------------------------------------------------------------
 void CSceneConverter::_instantiateGeometry( domNodeRef &nodeRef, Ogre::SceneNode* pSceneNode, Ogre::SceneManager* pOgreSceneManager)
@@ -347,6 +376,8 @@ void CSceneConverter::_instantiateGeometry( domNodeRef &nodeRef, Ogre::SceneNode
 
     if(instanceGeometryArray.getCount() > 0)
         logMessage("Instantiating geometry");
+    else
+        logMessage("No geometry instance found");
 
     for(unsigned int i = 0; i < instanceGeometryArray.getCount(); ++i)
     {
@@ -389,6 +420,8 @@ void CSceneConverter::_instantiateSkeletons( domNodeRef nodeRef, Ogre::SceneMana
 
     if(instanceControllerArray.getCount() > 0)
         logMessage("Instantiating skeletons");
+    else
+        logMessage("No skeleton found");
 
     for(unsigned int i = 0; i < instanceControllerArray.getCount(); ++i)
     {
@@ -503,12 +536,16 @@ void CSceneConverter::_instantiateSkeletons( domNodeRef nodeRef, Ogre::SceneMana
 //------------------------------------------------------------------------------
 void CSceneConverter::_createDefaultLight( Ogre::SceneManager* pOgreSceneManager )
 {
-    Ogre::Light* pOgreLight = NULL;
-    pOgreLight = pOgreSceneManager->createLight("default_light");
-    pOgreLight->setType(Ogre::Light::LT_DIRECTIONAL);
-    pOgreLight->setVisible(true);
-    pOgreLight->setDiffuseColour(Ogre::ColourValue(1.0f, 1.0f, 1.0f, 1.0f));
-    pOgreLight->setDirection(1.0f, -1.0f, 1.0f);
+    Ogre::Light* light = NULL;
+    light = pOgreSceneManager->createLight("default_light");
+    light->setType(Ogre::Light::LT_POINT);
+    light->setVisible(true);
+    light->setDiffuseColour(Ogre::ColourValue(1.0f, 1.0f, 1.0f, 1.0f));
+    light->setSpecularColour(Ogre::ColourValue(1.0f, 1.0f, 1.0f, 1.0f));
+
+    Ogre::SceneNode *node = pOgreSceneManager->getRootSceneNode()->createChildSceneNode("Generated Default Light", Ogre::Vector3(0, 200, 0));
+    _addLightToScene(light, node, pOgreSceneManager);
+
 }
 //------------------------------------------------------------------------------
 void CSceneConverter::_setLightAttenuation( domLight::domTechnique_common::domPointRef pointRef, Ogre::Light* pOgreLight, float attenuationRange )

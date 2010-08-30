@@ -10,7 +10,7 @@ void ColladaLoaderApp::createScene()
 {
     createGrid(500);
 
-    createLight();
+    //createLight();
 
     int ret = 0;
 
@@ -24,7 +24,8 @@ void ColladaLoaderApp::createScene()
     //ret = mColladaDatabase.load("../../media/plane_box_light.dae");
     //ret = mColladaDatabase.load("../../media/shapes.dae");
     //ret = mColladaDatabase.load("../../media/operalyon_3_tris.dae");
-    ret = mColladaDatabase.load("../../media/seymour_tris.dae");
+    ret = mColladaDatabase.load("../../media/amphi_math_COLLADA.DAE");
+    //ret = mColladaDatabase.load("../../media/seymour_tris.dae");
     assert(ret == 0);              
 
     mColladaDatabase.convertResources();
@@ -32,7 +33,7 @@ void ColladaLoaderApp::createScene()
 
     Ogre::SceneNode *node = mSceneMgr->getRootSceneNode()->createChildSceneNode("collada stuff");
     mColladaDatabase.convertScene(mSceneMgr, node);
-    //node->scaleq(10, 10, 10);
+    //node->scale(10, 10, 10);
 }
 //-----------------------------------------------------------------------------
 void ColladaLoaderApp::createGrid(int _units){

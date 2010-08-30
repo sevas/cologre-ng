@@ -14,6 +14,10 @@ namespace cologreng{
 class CSceneConverter : public CConverter, protected HasLog
 {
 public:
+    typedef enum {SHOW_LIGHT_BILLBOARD, HIDE_LIGHT_BILLBOARD} LightBillBoardMode;
+    typedef enum {USE_FILE_MATERIAL, USE_GENERIC_MATERIAL} MaterialMode;
+
+public:
     ///Constructor
     CSceneConverter(Ogre::Log *_log);
     ///Destructor
@@ -32,9 +36,12 @@ public:
        resources.
        @param pElement daeElement of the collada DAE database to be converted, must be of type "<scene>"
        @param pOgreSceneManager Pointer to a pre-created, valid Ogre::SceneManager object.
+       @param pParentNode Pointer to ogre scene node under which to build the scene
+       @param _bbMode Specify whether or not to show light billboards
+       @param _materialMode Specify the material mode to use (defined in the file or a generic gray one)
        @return 0 if succeeded, 1 upon error, prints error message to stderr
     */
-    int convert(daeElement* pElement, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode);
+    int convert(daeElement* pElement, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode *pParentNode, LightBillBoardMode _bbMode, MaterialMode _materialMode);
 
     void _createDefaultLight( Ogre::SceneManager* pOgreSceneManager );
 protected:
@@ -66,10 +73,12 @@ protected:
 
 
     void _instantiateGeometry( domNodeRef &nodeRef, Ogre::SceneNode* pSceneNode, Ogre::SceneManager* pOgreSceneManager);
-    void _instantiateLights( domNodeRef &nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode, bool _addBillboard);
+    void _instantiateLights( domNodeRef &nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode);
+    void _addLightToScene(Ogre::Light *_light, Ogre::SceneNode *_node, Ogre::SceneManager *_sceneMgr);
     void _instantiateSkeletons( domNodeRef nodeRef, Ogre::SceneManager* pOgreSceneManager, Ogre::SceneNode* pSceneNode);
     Ogre::MeshPtr _getOgreMesh( domInstance_geometryRef instanceGeometryRef);
     void _bindMaterialsToMesh( domBind_materialRef bindMaterialRef, Ogre::MeshPtr ogreMesh);
+    void _setSubmeshMaterial(Ogre::SubMesh *_subMesh, const std::string &_materialName, const std::string &_meshName, unsigned int _submeshIndex);
     std::string _makeNodeID();
 
 protected:
@@ -80,6 +89,9 @@ protected:
     void _setLightAttenuation( domLight::domTechnique_common::domPointRef pointRef, Ogre::Light* pOgreLight, float attenuationRange );
     /// \internal stores whether there is at least one light in the scene, if not, a default light will be added depending on CConverter::m_convOptions
     bool m_hasLight;
+
+    LightBillBoardMode mShowLights;
+    MaterialMode mMaterialMode;
 
     static unsigned int sGenericNodeID;
 

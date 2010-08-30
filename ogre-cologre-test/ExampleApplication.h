@@ -200,7 +200,7 @@ protected:
     {
         // Create one viewport, entire window
         Viewport* vp = mWindow->addViewport(mCamera);
-        vp->setBackgroundColour(ColourValue(0.5,0.5,0.5));
+        vp->setBackgroundColour(ColourValue(0.4,0.4,0.4));
 
         // Alter the camera aspect ratio to match the viewport
         mCamera->setAspectRatio(

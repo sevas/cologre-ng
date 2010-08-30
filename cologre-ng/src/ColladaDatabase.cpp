@@ -77,7 +77,10 @@ void CColladaDatabase::convertScene(Ogre::SceneManager* pOgreSceneManager, Ogre:
     m_pDatabase->getElement(&pElement, 0, NULL, "scene", NULL);
     CSceneConverter* pSceneConv = NULL;
     pSceneConv = new CSceneConverter(m_pLog);
-    pSceneConv->convert(pElement, pOgreSceneManager, pParentNode);
+    pSceneConv->convert(
+        pElement, pOgreSceneManager, pParentNode
+        , CSceneConverter::SHOW_LIGHT_BILLBOARD
+        , CSceneConverter::USE_FILE_MATERIAL);
     delete pSceneConv;
 }
 //------------------------------------------------------------------------------
